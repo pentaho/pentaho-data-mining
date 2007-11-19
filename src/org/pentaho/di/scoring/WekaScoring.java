@@ -152,8 +152,8 @@ public class WekaScoring extends BaseStep
       // Determine the output format
       m_meta.getFields(m_data.getOutputRowMeta(), getStepname(),
                        null, null, this);
-      System.err.println("Output Format: \n"
-                         + m_data.getOutputRowMeta().toStringMeta());
+      //      System.err.println("Output Format: \n"
+      //                 + m_data.getOutputRowMeta().toStringMeta());
       
     } // end (if first)
 
