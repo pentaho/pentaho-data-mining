@@ -47,6 +47,17 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 
+/**
+ * Outputs Kettle rows to a file in WEKA's ARFF (Attribute
+ * Relation File Format) format. <p>
+ *
+ * Kettle String fields are converted to ARFF nominal,
+ * Number and Integer are converted to ARFF numeric, and
+ * Date remains the same.
+ *
+ * @author Mark Hall (mhall{[at]}pentaho.org)
+ * @version 1.0
+ */
 public class ArffOutput extends BaseStep 
   implements StepInterface {
 
