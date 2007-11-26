@@ -139,6 +139,10 @@ public class ArffOutput extends BaseStep
         throw new KettleException("No file name given to write to!");
       }
 
+      if (Const.isEmpty(m_meta.getRelationName())) {
+        throw new KettleException("No relation name given!");
+      }
+
       try {
         m_data.openFiles(m_meta.getFileName());
       } catch (IOException ex) {
