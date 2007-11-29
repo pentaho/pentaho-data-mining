@@ -478,13 +478,14 @@ public class WekaScoringDialog extends BaseStepDialog
        new SelectionAdapter() {
          public void widgetSelected(SelectionEvent e) {
            FileDialog dialog = new FileDialog(shell, SWT.OPEN);
-           dialog.setFilterExtensions(new String[] {"*.ser", ".model", "*"});
+           dialog.setFilterExtensions(new String[] {"*.model", "*"});
            if (m_wFilename.getText() != null) {
              dialog.setFileName(transMeta.
                                 environmentSubstitute(m_wFilename.
                                                       getText()));
            }
            dialog.setFilterNames(new String[] {
+               Messages.getString("WekaScoringDialog.FileType.ModelFile"),
                Messages.getString("System.FileType.AllFiles")});
 
            if (dialog.open() != null) {
@@ -494,7 +495,7 @@ public class WekaScoringDialog extends BaseStepDialog
                  dialog.getFileName().endsWith("." + extension)) {
                // The extension is filled in and matches the end 
                // of the selected file => Strip off the extension. */
-             String fileName = dialog.getFileName();
+             //             String fileName = dialog.getFileName();
              /*               m_wFilename.
                               setText(dialog.getFilterPath()
                               + System.getProperty("file.separator")
