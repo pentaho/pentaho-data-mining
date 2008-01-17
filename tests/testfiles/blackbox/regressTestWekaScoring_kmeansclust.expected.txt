@@ -1,4 +1,4 @@
-input1;input2;input3;input4;input5;input6;input7;input8;input9;input10;input11;input12;input13;input14;input15;input16;class;cluster # (predicted)
+input1;input2;input3;input4;input5;input6;input7;input8;input9;input10;input11;input12;input13;input14;input15;input16;class;cluster#_predicted
  047; 100; 027; 081; 057; 037; 026; 000; 000; 23; 056; 053; 100; 090; 040; 098;8; 6.0
  000; 089; 027; 100; 042; 075; 029; 045; 015; 15; 037; 000; 069; 002; 100; 006;2; 2.0
  000; 057; 031; 068; 072; 090; 100; 100; 076; 75; 050; 051; 028; 025; 016; 000;1; 4.0

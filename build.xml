@@ -89,7 +89,10 @@
 	    		includes="**/*.jar"/>
 	    	<fileset 
 	    		dir="${libext}" 
-	    		includes="**/weka.jar"/>
+	    		includes="**/xstream*.jar"/>
+	    	<fileset 
+	    		dir="${libext}" 
+	    		includes="**/xpp3*.jar"/>
 	  	    </copy>
 	  </target>
 

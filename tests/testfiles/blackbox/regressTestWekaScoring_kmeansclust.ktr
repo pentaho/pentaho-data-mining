@@ -42,7 +42,7 @@
     <clusterschemas>
     </clusterschemas>
   <modified_user>-</modified_user>
-  <modified_date>2008&#47;01&#47;07 16:04:26.195</modified_date>
+  <modified_date>2008&#47;01&#47;17 14:12:10.305</modified_date>
   </info>
   <notepads>
   </notepads>
@@ -255,8 +255,28 @@
     </fields>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>109</xloc>
-      <yloc>114</yloc>
+      <xloc>146</xloc>
+      <yloc>98</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Weka Scoring</name>
+    <type>WekaScoring</type>
+    <description/>
+    <distribute>Y</distribute>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+<weka_scoring><output_probabilities>N</output_probabilities>
+<weka_scoring_model>H4sIAAAAAAAAAO1aCVhTx&#47;a&#47;BJFNEFkUVFBBFEQChJ0gHGTRQEB2MNHClVwhmgWTGxZX3HepuxURFNeKS9XiVq1axbpVUWuVWq2KWi1o3beKb+YGkqivPL&#47;3eMv&#47;&#47;3m&#47;3Mm9s&#47;zmN2fOzDkzcysbCAOlgnCTK7LZuZSMJnPkbJGYrcySK8SybHYaNZJMUj+HS1RKmlJQCi&#47;jSPdvTjsVsgg9PmEozZDKRZSEJrrw81Fmj6zmbEoPTQlugYLo&#47;Y9riMVA3wy12v+ZpeseBt1ImpFDkSJKQRM2TfByBeXBkylpUpZFKbkFuYi8FU5h4xS2JuXtPqOFPtTGNSzCgEe0k2aES0ilkicTUQU8zJkvllFKPk4Io2mFeJiKppQ00VGnjihSSadSWbRcweUTptIMDfIoYjzRlk+YSzMSKQlJi+WyOFJK0YQlfwSZR3pISFm2RxKN24PYvUUXgS7E0lrLUot9&#47;cftQ2Jv9jBkEW14hBWiSeaSWWK6kCfLUlBSJC0eYa2NjVVJaHGuREwpeERbaUaSeDQlJIylGYOGjUBoqAFWQh0S6lhEAtWvh24Wui1UiuZMbJyJ3ZTp8x&#47;SyyyUrhKUh8nv8K5YNUJ6uiNkZ+FoZ5JFdBBgEQwklQJKIc+VizFVQywmJGImiacMy6MUZDY5TEIJGAkqE6lslYRURGC58+X5lKK&#47;XCUTCQhL3VeechBSEx5hgtqlQF2PBMm0Nrkwl2JKpuTm6pbUvqpLRmCtSaPE2Tk008ERJE1FyRVSkqaJrmrx0FQB7ZEkluZKKG2quptRg3JoTBlrHJNZRYslHppoLqOUAxmlxJqgz8dEYymaFJE0SRPddFQoXiGnkXApEXpAHGkxUlg+bgpWGFzYkAFLJSWqJrUqyMUdRejpvf2D0FxM1ITmiNCmh9xcrPr22j76O7X5ntow9bV7Wg0aSwKibZZErqREaChaM92P28XW5g20PDs61y9kmXrciajhJFI2ZkxopaDTDgRjpYXRiMdqX3vnHtF1u&#47;UJVhRhIpGToigS6zmPMKZzFJQyRy4RFeSGAtMEo3wjFOrjR9RwmmgrluWqaK9cRhbmeowgPlISuIRVi7AcHVhW68F668Dqtx6sjw5sm9aD9dWBNWg9WD8d2LatB+uvA2vYerABOrBGrQcbqANr3Bqwhurh4KmDa9KKuLrjzLQVcXUHWrtWxNUdaWatiKs71MxbEVd3rLVvRVy&#47;3HcvpowxobXxhArHtMNPNBGALKJInC2mle6MqRguliCXTMlWyZQqNJfniZFJYJPN5p2dSEnleZR7opc&#47;Mi5d1cZF49Cx1SYzJpYiZcrztrbx7b&#47;P82QRJoyDxUN5GG9IySPMkIlTSZvcP+RmWWL&#47;i3kJRy6NQi4WMaT1hURHTUqcXCqWkZJwZMix2WkjFAp5QuxHNKVjZwfFs4Q8PmGhjaVFEVReM5oBssRkAc4UoX4Ry3AKn4&#47;rSaRyJWQWFStWKpFLEcXIgSaC1Pa6SSweumLx0IjF492yaoPNFRLtpRnKUSpSQYkiFQq5gqHBR5bR+X3BJZIyEWrfaGwiNV7xfvuM3S&#47;HfnWMRbDU7hxFiRjZ4YcItQFGYHbvg2kANqUvSnt9dx3R7LSZNN1mWHkYMgYa&#47;&#47;N9JbHQKImDVk0&#47;2vH4x7PhJyv+yYp&#47;suKfrPj7uJ+s+EdacSPNBG2ETLHlh1sc1gszayvKC1ksQl9nySvEi1i0XNcuKpH1M2ZWwaSSohlDiRZgTWRVCmwrQ9bNsd6UJXBotiMWkHJgRFn262OQ8rxmzv1Fl4Ffcfio2MQQ0vTr5qq+bgdhRVR6Lz1zSLp4y3rxnd3AH&#47;wFupZD4ox4rkNHN0g2mTf56aixMOixN74gWbDk6YsV&#47;QBwrEkxDJz81fVhO6dC9zdDMlgVq8A6Z9Idr47bwexR1N7aaZaYZQJDfpqGKX6boSZXFXR&#47;&#47;XIDSB8mrRfa5wNvW5T&#47;ksqVkHI2dHr5zmLwsVpzY0alN8Qesr0q2F4AnUOiVi9p1w24G35m7RrTAPDwhE38r4Zg+dvp1Sdnn4Hk&#47;rvG1FfbQ58+qw6aZdRDvMvTw8VDXAHCLtijH3Cg0WHSuWDgfn5u3RGD2pbJeSQJexh35kGyDUfiu&#47;QGDPjGc6tdOAfSRy3ydho3ARIm2xoTnT0gOa5P2sG3POAHLb9sNPAcRN1wnH&#47;pfmcIS7&#47;OmrfQCvp2KxJWPE4AD&#47;&#47;9e6QH0sAp4Pnvs7OzIfLivj61m&#47;zAS9DFpzK4J6S9WXtixZhn4F17lOr1fFfL5EJK1d2RwmV0Ezz1huMLYoS3mf8gE3U3ster&#47;wd+rc5vuVn9nrSTf+rUqdMAl+yY91RvdXpi91NMfNxLdb60xXOYd68m&#47;KRYRg9aJmcSy&#47;bulOEAcdHmPbbXnIYQcDzeedULSHjhcWHKyipIuHbyXLqZKaS6Zvq4r38MqbWBpdZdwyFtOPsA9&#47;g6SLaoKkM5IHHpxNtv6SuQ8NnrLrvDAoGXHWlocVkMMU&#47;P2HDmcCHQ5OqlxNIyiO7bdurOxozQ11Os5ju87toyOW5l6uGC7SGQ3LD0QpJ&#47;PQwqgHrrDb6QtnRXY02NNaQkBjxJ+2MDpJypOrv6VgzEzJ&#47;38vGgGRA&#47;7FyOW+X3kEBfcWZX60PU+tlOtTVBkHIizL88qzf4nVxZel1&#47;G0TbVj3LOXwE7Pv&#47;1P2OsAE6lBVN8ZnuAk4R8T&#47;P6xTfMrkBi7Ce9ofU9NulBbdLwU&#47;MXJBIlpocKjUFXlz5PfPyexA19ug99IPoMS7X9rn8Cj05R83RDzg9qtNXVQ8G11cXw19djAD3YxUWxyo6AG9u0MPTQY8gOslZttBZDsk1tW&#47;n&#47;0xA8s3x9RXjGyBt85FysyPlLZOLvLfgisWzbEifPPnOLf+F4Gtp3TFhmx0knbfxIermgLntXPOJt74E3qtBLHqiEqIssosn6w+GyIS7wcbn2qKp6IKRUcNoiA6qd6wRiCDlUPFTnswI4oaU&#47;aCXeg4S&#47;aJn79q6HkL39nTpW5GJRi+TMXTHL+y1JZ&#47;nMORoYtQ&#47;uwz6yOwfLg&#47;Q1MqsYWLmPnM+meh5oXlyNUIJ+ii+0&#47;O6QXbFM4M1k+57BiGXkWHJ&#47;7kUbFF4sXsze+Xd275W02hkAU8gH&#47;g4cqqOIacVW8QtyMtEz23WoXvMu6sV&#47;JLYokX8y+m3wnbhFzPOg8s273G9bsyEgPqZhwds0QeXX8yFY0ctBP+8u7fNFEXgUssJOl5oCCGb3viUXv0OPMlimN1YBn7WgxvbS+eBe+&#47;I4ODsjuAnUF458uNmYI&#47;5KXPRuXDgJOhxuy7ZB87RkcJ+4c+gj0vUZd4lC+icdO+rPfMCMZF1f0nO67t2DyoOScE+Z+&#47;l8W+PA6dd41jfva+hR+z6uJL53cDdrXLnnfN+4LyxX+XSxTvByawnt2c3Glx2l9TQe6aD3&#47;SDmTcz9oLj0Ue1NcNjwf&#47;NnmF1KSxwNT40LjJlJnjf73KCfLAVXJfRtn71f0JAO59dbyesBb99L9OHGrNaJuc7HcpLBnhCn938hmVuZuB9y2i+s&#47;5T6GK6svepnsbge7rmrsrBBlzdu5gEHOgK3iE7bq2R6YP7rBGdZ8UcAv+y3wQn7U3BrXpYw&#47;hfX4CXU0LVzX5+0Cs4eSNtawqcZIEsyPI2eH4d29vTdTP0+jZ6522ne+BzcQy3sptzy+S8Jw227IUkxl7I2S0KDALfweYZh45fBU5NwvnqCUro53zw92lb1oG75eKG00YA3DW+n02UpILjxjNf5OwbCdyUkfcPsTOBs3LaZ91d7MF9IDniok0scLhnvS1v6kPg&#47;pU&#47;7Tg+FXo8Lnr9581U8HIYH515sAS8lYQv39a1ZXJOlqrUHMNg8OtPn3Na6QteWzb9sFg1DjhBgjef270GDg0LLq4cBO5h4+4oGl3A64J&#47;Sch4B3C63KNqb&#47;Fq8Ol0+KZy40joLao1TX15A7wyfQozK8qgb5rszuAaLvgF1pbEVfiCs0PvkKLn0yC4Y&#47;CZOhsLcJSGbnpqrGyZnI94nluyxUtwOWwZ9P0sAulQDkfglQMu46ujNs2uAY&#47;ngpjS&#47;FrouWfsYvlvp8E&#47;7vl0QakTeDzud2GO0AIC7z7Kb3N1I3h5Zx894PgavBqOuXxZdxXYwuj4Bz+sBi9F542vniAd&#47;Tolb2&#47;hHui9Yvq4qX2qUU&#47;tCPj9yfCWyYVMiFleFfItONnYG6whJgLn6fCRX1j2AE7AhUKX7HgInJGxIjY6DTx&#47;X7LA7dES4D4kI0eyC8HtSdT2mXXBEPhVnI2&#47;QAjuIeZ9bz1qRAOqLnH98kvg88s3MKnrFAgUrnGsJmvBqwPx5H6+JQS3JXZXN9LQfYYynOqW2jK5gFlFAx5e&#47;Ba6JP3a2+DZNvCiz3TKeC4HZ&#47;GEIyVBsdDNkGr0JNaCG2kv3n7&#47;D+h31zP17r1KYNc5Gk0IUgLHY&#47;Xz4gem4L1ecT&#47;vzj1w333hxZqfbYFttD4y2i4dPCX5kxKu+UI3&#47;vRnhdv3o&#47;rs1h8aIAh9+GdSVqeYvQw5HCzT4TRYzfK&#47;9a9lQvyXL7QkCvhnLbPyWnlP68mZpixCj9nCw8fOyjCZiNnWbN7CC&#47;wY9Hg5TcloMSlRny5ny9D6TJG&#47;ozCFzrk7j9nWe+fkWYA399S5mMiC5jPW5mrUm5JTs+YkNjoBm0UYC&#47;BWZ5RYoaT7k3RWToRcRgnweWMclc9E8BlEvKBUn2EyyzvmbJqJTKQkaCmopAl7nVPJ5lNrUsKXZ5Hq8+0OTQXU59bqMnY6ZdTx2vyogkEq+v1qzZpjE1SUiqKJDjoITBQq2b45TxM3XPQAs0OsjtYywCnfIu9B7+N3MvFDMg7ScCDAwVAcZOIgCwfMhCTGgQQHchww57gMSAEOxuBgPA4mvuva&#47;Ps22rtoV&#47;cf9A6M09sVEeo5B7tSCqLz3zmTb8r4E186vaqX43MWYag5Lxdi&#47;QmTSOT5lAipoLjp84WYD758sNQ55dV89dBWvW3A9C7znYEuBAPdVPW70CaaeCbmBOMBtmFktYbQzh3NUsRbI20ItVPYFt2GBOMvMpLGu9mm6MYyxrva5uhujwRmoT16VrO9vHScsIi7VU+f0OcRHbI+&#47;IqiHSVhnpjzBSFh2vTa3D4ThiTxjjpZo4o6aL+U6C+XS9AMcbq7oujHFa&#47;uM2fqBnl4RkFlmZae&#47;Q&#47;8YUVk1PSwRqCE9onJdPrDlrzvpTMoqHmdtOr0zhCXJB7v2rC4QYSVDoMcx33Vij34FzT&#47;Y1L8NwjzIxYwOvMFY9hRB7TXdgAzQ&#47;7hKuhg001Qz8J63PSJDzMQ8Rcn2m+sNDNqTyaMQxZMPV6TSTGe2PRYan1umrS+b+UB+L&#47;WfY2t0323&#47;p9r+b8uJka&#47;dfzR8BxumX1uH0gZsH3c4+SlEBE71fD8wC8h+eGcMVXPtsLAGyWHb8aVQ7xoi2jFxM3AW+Hl2eHGA4gKvebLy6kCvrxv2kPbQIDLNv3GdhwCcf1tlxk9LIAw8UmbP6PMIWZS7VCX0rcQlv&#47;QNqDiGQxYc8rHLfAwBF&#47;KSVVO4WmYGMGEEVfKO&#47;a7DkVzfxvhVp0ECzxLVg21WgczZxfTSfMewZjji&#47;d2&#47;y4cZlZuVdUOfwOzvJ694CXbQdHABXXDNtz5G83ltioHKQAA</weka_scoring_model>
+</weka_scoring>     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>270</xloc>
+      <yloc>227</yloc>
       <draw>Y</draw>
       </GUI>
     </step>
@@ -500,7 +520,7 @@
         <precision>-1</precision>
       </field>
       <field>
-        <name>cluster # (predicted)</name>
+        <name>cluster#_predicted</name>
         <type>Number</type>
         <format/>
         <currency/>
@@ -514,28 +534,8 @@
     </fields>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>492</xloc>
-      <yloc>250</yloc>
-      <draw>Y</draw>
-      </GUI>
-    </step>
-
-  <step>
-    <name>Weka Scoring</name>
-    <type>WekaScoring</type>
-    <description/>
-    <distribute>Y</distribute>
-    <copies>1</copies>
-         <partitioning>
-           <method>none</method>
-           <schema_name/>
-           </partitioning>
-<weka_scoring><output_probabilities>N</output_probabilities>
-<model_file_name>testfiles&#47;blackbox&#47;tests&#47;trans&#47;steps&#47;wekaScoring&#47;kmeans_pen.model</model_file_name>
-</weka_scoring>     <cluster_schema/>
- <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>284</xloc>
-      <yloc>248</yloc>
+      <xloc>504</xloc>
+      <yloc>226</yloc>
       <draw>Y</draw>
       </GUI>
     </step>

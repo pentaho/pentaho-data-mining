@@ -115,29 +115,34 @@ public class WekaScoring extends BaseStep
 
       m_data.setOutputRowMeta(getInputRowMeta().clone());
       
-      // Check that we have a file to try and load a classifier from
-      if (Const.isEmpty(m_meta.getSerializedModelFileName())) {
-        throw new KettleException("No filename to load  "
-                                  + "model from!!");
-      }
+      // If we don't have a model, or a file name is set, then load from file
+      if (m_meta.getModel() == null || 
+          !Const.isEmpty(m_meta.getSerializedModelFileName())) {
 
-      // Check that the specified file exists (on this file system)
-      File modelFile = 
-        new File(m_meta.getSerializedModelFileName());
-      if (!modelFile.exists()) {
-        throw new KettleException("Serialized model file does "
-                                  + "not exist on disk!");
+        // Check that we have a file to try and load a classifier from
+        if (Const.isEmpty(m_meta.getSerializedModelFileName())) {
+          throw new KettleException("No filename to load  "
+                                    + "model from!!");
+        }
+
+        // Check that the specified file exists (on this file system)
+        File modelFile = 
+          new File(m_meta.getSerializedModelFileName());
+        if (!modelFile.exists()) {
+          throw new KettleException("Serialized model file does "
+                                    + "not exist on disk!");
+        }
+        
+        // Load the classifier and set up the expected input format
+        // according to what the classifier has been trained on
+        try {
+          WekaScoringModel model = WekaScoringData.loadSerializedModel(modelFile);
+          m_meta.setModel(model);
+        } catch (Exception ex) {
+          throw new KettleException("Problem de-serializing model "
+                                    + "file!"); 
+        }
       }
-      
-      // Load the classifier and set up the expected input format
-      // according to what the classifier has been trained on
-      try {
-        WekaScoringModel model = WekaScoringData.loadSerializedModel(modelFile);
-        m_meta.setModel(model);
-      } catch (Exception ex) {
-        throw new KettleException("Problem de-serializing model "
-                                  + "file!"); 
-     }
 
       // Check the input row meta data against the instances
       // header that the classifier was trained with

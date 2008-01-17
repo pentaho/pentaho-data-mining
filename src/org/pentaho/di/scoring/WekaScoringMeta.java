@@ -24,6 +24,7 @@ package org.pentaho.di.scoring;
 
 import java.util.List;
 import java.util.Map;
+import java.io.*;
 
 import org.eclipse.swt.widgets.Shell;
 
@@ -52,6 +53,7 @@ import org.pentaho.di.trans.step.StepMetaInterface;
 import org.w3c.dom.Node;
 
 import weka.core.Instances;
+import weka.core.SerializedObject;
 
 /**
  * Contains the meta data for the WekaScoring step.
@@ -83,7 +85,6 @@ public class WekaScoringMeta
    */
   public WekaScoringMeta() {
     super(); // allocate BaseStepMeta
-    System.err.println("Here in constructor for meta....");
   }
 
   /**
@@ -177,17 +178,43 @@ public class WekaScoringMeta
    * @return a <code>String</code> containing the XML
    */
   public String getXML() {
+
     StringBuffer retval = new StringBuffer(100);
 
-    if (m_modelFileName != null) {
-      retval.append("<" + XML_TAG + ">");
+    retval.append("<" + XML_TAG + ">");
+    
+    retval.append(XMLHandler.addTagValue("output_probabilities",
+                                         m_outputProbabilities));
 
+    // can we save the model as XML?
+    if (m_model != null 
+        && Const.isEmpty(m_modelFileName)) {
+
+      try {
+        // Convert model to base64 encoding
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        BufferedOutputStream bos = new BufferedOutputStream(bao);
+        ObjectOutputStream oo = new ObjectOutputStream(bos);
+        oo.writeObject(m_model);
+        oo.flush();
+        byte[] model = bao.toByteArray();
+        String base64model = XMLHandler.addTagValue("weka_scoring_model",
+                                                    model);
+        System.err.println("Size of base64 model "+base64model.length());
+        retval.append(base64model);
+        oo.close();
+      } catch (Exception ex) { 
+        System.err.println("Problem serializing model to base64 (Meta.getXML())");
+      }
+    } else {
+      System.err.println("Model will be sourced from file "
+                         + m_modelFileName);
+      // save the model file name
       retval.append(XMLHandler.addTagValue("model_file_name",
                                            m_modelFileName));
-      retval.append(XMLHandler.addTagValue("output_probabilities",
-                                           m_outputProbabilities));
-      retval.append("</" + XML_TAG + ">");
     }
+      
+    retval.append("</" + XML_TAG + ">");
     return retval.toString();
   }
   
@@ -213,6 +240,16 @@ public class WekaScoringMeta
    */
   public Object clone() {
     WekaScoringMeta retval = (WekaScoringMeta) super.clone();
+    // deep copy the model (if any)
+    if (m_model != null) {
+      try {
+        SerializedObject so = new SerializedObject(m_model);
+        WekaScoringModel copy = (WekaScoringModel)so.getObject();
+        retval.setModel(copy);
+      } catch (Exception ex) {
+        System.err.println("Problem deep copying scoring model (meta.clone())");
+      }
+    }
     return retval;
   }
 
@@ -236,17 +273,30 @@ public class WekaScoringMeta
     int nrModels = 
       XMLHandler.countNodes(stepnode, XML_TAG);
 
-
-    //    for (int i = 0; i < nrStats; i++) {
     if (nrModels > 0) {
       Node wekanode = 
         XMLHandler.getSubNodeByNr(stepnode, XML_TAG, 0); 
-      //    Node wekanode = XMLHandler.getSubNode(stepnode, 
-      //    m_stats[i] = new UnivariateStatsMetaFunction(statnode);
-      //    }
-      
-      m_modelFileName = 
-        XMLHandler.getTagValue(wekanode, "model_file_name");
+
+      // try and get the XML-based model
+      boolean success = false;
+      try {
+        String base64modelXML = XMLHandler.getTagValue(wekanode,
+                                                       "weka_scoring_model");
+        System.err.println("Got base64 string...");
+        //            System.err.println(base64modelXML);
+        deSerializeBase64Model(base64modelXML);
+        success = true;
+        System.err.println("Successfully de-serialized model!");
+      } catch (Exception ex) {
+        success = false;
+      }
+
+      if (!success) {
+        // fall back and try and grab a model file name
+        m_modelFileName = 
+          XMLHandler.getTagValue(wekanode, "model_file_name");
+      }
+
       String temp = XMLHandler.getTagValue(wekanode, "output_probabilities");
       if (temp.equalsIgnoreCase("N")) {
         m_outputProbabilities = false;
@@ -254,6 +304,19 @@ public class WekaScoringMeta
         m_outputProbabilities = true;
       }
     }
+  }
+
+  protected void deSerializeBase64Model(String base64modelXML) 
+    throws Exception {
+    byte[] model = XMLHandler.stringToBinary(base64modelXML);
+    //    System.err.println("Got model byte array ok.");
+    //    System.err.println("Length of array "+model.length);
+            
+    // now de-serialize
+    ByteArrayInputStream bis = new ByteArrayInputStream(model);
+    ObjectInputStream ois = new ObjectInputStream(bis);
+    m_model = (WekaScoringModel)ois.readObject();
+    ois.close();
   }
 
   /**
@@ -269,8 +332,39 @@ public class WekaScoringMeta
                       Map<String, Counter> counters) 
     throws KettleException {
     
-    m_modelFileName = 
-      rep.getStepAttributeString(id_step, 0, "model_file_name");
+
+    // try and get a filename first as this overides any model stored
+    // in the repository
+    boolean success = false;
+    try {
+      m_modelFileName = 
+        rep.getStepAttributeString(id_step, 0, "model_file_name");
+      success = true;
+      if (m_modelFileName == null || Const.isEmpty(m_modelFileName)) {
+        success = false;
+      }
+    } catch (KettleException ex) {
+      success = false;
+    }
+
+    if (!success) {
+      // try and get the model itself...
+      try {
+        String base64XMLModel = rep.getStepAttributeString(id_step, 0, "weka_scoring_model");
+        System.err.println("Size of base64 string read " + base64XMLModel.length());
+        //        System.err.println(xmlModel);
+        if (base64XMLModel != null && base64XMLModel.length() > 0) {
+          // try to de-serialize
+          deSerializeBase64Model(base64XMLModel);
+          success = true;
+        } else {
+          success = false;
+        }
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+    }
+
     m_outputProbabilities = 
       rep.getStepAttributeBoolean(id_step, 0, "output_probabilities");
   }
@@ -287,15 +381,42 @@ public class WekaScoringMeta
                       long id_transformation, 
                       long id_step)
     throws KettleException {
-    
-    rep.saveStepAttribute(id_transformation, 
-                          id_step, 0, 
-                          "model_file_name",
-                          m_modelFileName);
+
     rep.saveStepAttribute(id_transformation,
                           id_step, 0,
                           "output_probabilities",
                           m_outputProbabilities);
+
+    if (m_model != null 
+        && Const.isEmpty(m_modelFileName)) {
+      try {
+        // Convert model to base64 encoding
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        BufferedOutputStream bos = new BufferedOutputStream(bao);
+        ObjectOutputStream oo = new ObjectOutputStream(bos);
+        oo.writeObject(m_model);
+        oo.flush();
+        byte[] model = bao.toByteArray();
+        String base64XMLModel = Repository.byteArrayToString(model);
+
+        // String xmlModel = XStream.serialize(m_model);
+        rep.saveStepAttribute(id_transformation,
+                              id_step, 0,
+                              "weka_scoring_model",
+                              base64XMLModel);
+      } catch (Exception ex) {
+        System.err.println("Problem serializing model to base64 (Meta.saveRep())");
+      }
+    } else {
+      // either XStream is not present or user wants to source from
+      // file
+      System.err.println("Model will be sourced from file "
+                         + m_modelFileName);
+      rep.saveStepAttribute(id_transformation, 
+                            id_step, 0, 
+                            "model_file_name",
+                            m_modelFileName);
+    }
   }
 
   /**
@@ -336,7 +457,7 @@ public class WekaScoringMeta
 
           ValueMetaInterface newVM = 
             new ValueMeta(classAttName
-                          + "(predicted)",
+                          + "_predicted",
                           valueType);
           newVM.setOrigin(origin);
           row.addValueMeta(newVM);
@@ -346,7 +467,7 @@ public class WekaScoringMeta
             String classVal = header.classAttribute().value(i);
             ValueMetaInterface newVM = 
               new ValueMeta(classAttName + 
-                            ":" + classVal + "(predicted prob)",
+                            ":" + classVal + "_predicted_prob",
                             ValueMetaInterface.TYPE_NUMBER);
             newVM.setOrigin(origin);
             row.addValueMeta(newVM);
@@ -360,7 +481,7 @@ public class WekaScoringMeta
               ((WekaScoringClusterer)m_model).numberOfClusters();
             for (int i = 0; i < numClusters; i++) {
               ValueMetaInterface newVM = 
-                new ValueMeta("cluster " + i + "(predicted prob)",
+                new ValueMeta("cluster_" + i + "_predicted_prob",
                               ValueMetaInterface.TYPE_NUMBER);
               newVM.setOrigin(origin);
               row.addValueMeta(newVM);
@@ -372,7 +493,7 @@ public class WekaScoringMeta
           }
         } else {
           ValueMetaInterface newVM = 
-            new ValueMeta("cluster # (predicted)",
+            new ValueMeta("cluster#_predicted",
                           ValueMetaInterface.TYPE_NUMBER);
           newVM.setOrigin(origin);
           row.addValueMeta(newVM);
@@ -428,9 +549,15 @@ public class WekaScoringMeta
     }
 
     if (m_model == null) {
-      cr = new CheckResult(CheckResult.TYPE_RESULT_WARNING,
-                           "No model loaded yet.", stepMeta);
-      remarks.add(cr);
+      if (!Const.isEmpty(m_modelFileName)) {
+        File f = new File(m_modelFileName);
+        if (!f.exists()) {
+          cr = new CheckResult(CheckResult.TYPE_RESULT_ERROR,
+                               "Step does not have access to a "
+                               + "usable model!", stepMeta);
+          remarks.add(cr);
+        }
+      }
     }
   }
 
@@ -474,7 +601,7 @@ public class WekaScoringMeta
                                int cnr, 
                                TransMeta tr, 
                                Trans trans) {
-    System.err.println("Here in getStep...");
+
     return new WekaScoring(stepMeta, stepDataInterface, cnr, tr, trans);
   }
 
@@ -487,7 +614,7 @@ public class WekaScoringMeta
    * @return a <code>StepDataInterface</code> value
    */
   public StepDataInterface getStepData() {
-    System.err.println("Here in getStepData...");
+
     return new WekaScoringData();
   }
 }

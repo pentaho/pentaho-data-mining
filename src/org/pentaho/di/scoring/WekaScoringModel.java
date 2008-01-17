@@ -22,6 +22,8 @@
 
 package org.pentaho.di.scoring;
 
+import java.io.Serializable;
+
 import weka.core.Instances;
 import weka.core.Instance;
 import weka.classifiers.Classifier;
@@ -36,7 +38,7 @@ import weka.clusterers.Clusterer;
  * @author  Mark Hall (mhall{[at]}pentaho.org)
  * @version 1.0
  */
-public abstract class WekaScoringModel {
+public abstract class WekaScoringModel implements Serializable {
 
   // The header of the Instances used to build the model
   private Instances m_header;

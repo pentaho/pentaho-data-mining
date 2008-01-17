@@ -66,6 +66,7 @@ import org.pentaho.di.ui.core.widget.TextVar;
 
 import weka.core.Instances;
 import weka.core.Attribute;
+import weka.core.xml.XStream;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -400,11 +401,11 @@ public class WekaScoringDialog extends BaseStepDialog
     wModelComp.layout();
     m_wModelTab.setControl(wModelComp);
     int tempF = m_wModelText.getStyle();
-    if ((tempF & (SWT.WRAP)) > 0) {
+    /*    if ((tempF & (SWT.WRAP)) > 0) {
       System.err.println("Wrap is turned on!!!!");
     } else {
       System.err.println("Wrap turned off");
-    }
+      }*/
 
 
 
@@ -470,7 +471,9 @@ public class WekaScoringDialog extends BaseStepDialog
     // if the user presses enter
     m_wFilename.addSelectionListener(new SelectionAdapter() {
         public void widgetDefaultSelected(SelectionEvent e) {
-          loadModel();
+          if (!loadModel()) {
+            System.err.println("Problem loading model file!");
+          }
         }
       });
 
@@ -478,15 +481,36 @@ public class WekaScoringDialog extends BaseStepDialog
        new SelectionAdapter() {
          public void widgetSelected(SelectionEvent e) {
            FileDialog dialog = new FileDialog(shell, SWT.OPEN);
-           dialog.setFilterExtensions(new String[] {"*.model", "*"});
+           String[] extensions = null;
+           String[] filterNames = null;
+           if (XStream.isPresent()) {
+             extensions = new String[3];
+             filterNames = new String[3];
+             extensions[0] = "*.model";
+             filterNames[0] = 
+               Messages.getString("WekaScoringDialog.FileType.ModelFileBinary");
+             extensions[1] = "*.xstreammodel";
+             filterNames[1] = 
+               Messages.getString("WekaScoringDialog.FileType.ModelFileXML");
+             extensions[2] = "*";
+             filterNames[2] = 
+               Messages.getString("System.FileType.AllFiles");
+           } else {
+             extensions = new String[2];
+             extensions[0] = "*.model";
+             filterNames[0] = 
+               Messages.getString("WekaScoringDialog.FileType.ModelFileBinary");
+             extensions[1] = "*";
+             filterNames[1] = 
+               Messages.getString("System.FileType.AllFiles");
+           }
+           dialog.setFilterExtensions(extensions);
            if (m_wFilename.getText() != null) {
              dialog.setFileName(transMeta.
                                 environmentSubstitute(m_wFilename.
                                                       getText()));
            }
-           dialog.setFilterNames(new String[] {
-               Messages.getString("WekaScoringDialog.FileType.ModelFile"),
-               Messages.getString("System.FileType.AllFiles")});
+           dialog.setFilterNames(filterNames);
 
            if (dialog.open() != null) {
              /*             String extension = m_wExtension.getText();
@@ -508,7 +532,9 @@ public class WekaScoringDialog extends BaseStepDialog
              //             }
 
              // try to load model file and display model
-             loadModel();
+             if (loadModel()) {
+               System.err.println("Problem loading model file!");
+             }
            }
          }
        });
@@ -533,47 +559,30 @@ public class WekaScoringDialog extends BaseStepDialog
   /**
    * Load the model.
    */
-  private void loadModel() {
+  private boolean loadModel() {
     String filename = m_wFilename.getText();
     File modelFile = new File(filename);
-    try {
-      WekaScoringModel tempM = 
-        WekaScoringData.loadSerializedModel(modelFile);
-      m_wModelText.setText(tempM.toString());
-      m_currentMeta.setModel(tempM);
+    boolean success = false;
 
-      // take a look at the model-type and then the class
-      // attribute (if set and if necessary) in order
-      // to determine whether to disable/enable the
-      // output probabilities checkbox
-      if (!tempM.isSupervisedLearningModel()) {
-        // now, does the clusterer produce probabilities?
-        if (((WekaScoringClusterer)tempM).canProduceProbabilities()) {
-          m_wOutputProbs.setEnabled(true);
-        } else {
-          m_wOutputProbs.setEnabled(false);
-        }
-      } else {
-        // take a look at the header and disable the output
-        // probs checkbox if there is a class attribute set
-        // and the class is numeric
-        Instances header = tempM.getHeader();
-        if (header.classIndex() >= 0) {
-          if (header.classAttribute().isNumeric()) {
-            m_wOutputProbs.setSelection(false);
-            m_wOutputProbs.setEnabled(false);
-          } else {
-            m_wOutputProbs.setEnabled(true);
-          }
-        }
+    if (!Const.isEmpty(filename) && modelFile.exists()) {
+      try {
+        WekaScoringModel tempM = 
+          WekaScoringData.loadSerializedModel(modelFile);
+        m_wModelText.setText(tempM.toString());
+        m_currentMeta.setModel(tempM);
+
+        checkAbilityToProduceProbabilities(tempM);
+
+        // see if we can find a previous step and set up the
+        // mappings
+        mappingString(tempM);
+        success = true;
+      } catch (Exception ex) {
+        //      System.err.println("Problem loading model file...");
       }
-
-      // see if we can find a previous step and set up the
-      // mappings
-      mappingString(tempM);
-    } catch (Exception ex) {
-      System.err.println("Problem loading model file...");
     }
+
+    return success;
   }
 
   /**
@@ -676,16 +685,49 @@ public class WekaScoringDialog extends BaseStepDialog
 
       // Grab mappings if available
       mappingString(tempM);
+      checkAbilityToProduceProbabilities(tempM);
     } else {
       // try loading the model
       loadModel();
     }
   }
 
+  private void checkAbilityToProduceProbabilities(WekaScoringModel tempM) {
+    // take a look at the model-type and then the class
+    // attribute (if set and if necessary) in order
+    // to determine whether to disable/enable the
+    // output probabilities checkbox
+    if (!tempM.isSupervisedLearningModel()) {
+      // now, does the clusterer produce probabilities?
+      if (((WekaScoringClusterer)tempM).canProduceProbabilities()) {
+        m_wOutputProbs.setEnabled(true);
+      } else {
+        m_wOutputProbs.setSelection(false);
+        m_wOutputProbs.setEnabled(false);
+      }
+    } else {
+      // take a look at the header and disable the output
+      // probs checkbox if there is a class attribute set
+      // and the class is numeric
+      Instances header = tempM.getHeader();
+      if (header.classIndex() >= 0) {
+        if (header.classAttribute().isNumeric()) {
+          m_wOutputProbs.setSelection(false);
+          m_wOutputProbs.setEnabled(false);
+        } else {
+          m_wOutputProbs.setSelection(false);
+          m_wOutputProbs.setEnabled(true);
+        }
+      }
+    }
+  }
+
   private void cancel() {
     stepname = null;
     m_currentMeta.setChanged(changed);
-    m_currentMeta.setModel(null);
+    //    m_currentMeta.setModel(null);
+    // revert to original model
+    m_currentMeta.setModel(m_originalMeta.getModel());
     dispose();
   }
 
@@ -696,9 +738,13 @@ public class WekaScoringDialog extends BaseStepDialog
 
     stepname = m_wStepname.getText(); // return value
     
-    String modFname = transMeta.
-      environmentSubstitute(m_wFilename.getText());
-    m_currentMeta.setSerializedModelFileName(modFname);    
+    if (!Const.isEmpty(m_wFilename.getText())) {
+      String modFname = transMeta.
+        environmentSubstitute(m_wFilename.getText());
+      m_currentMeta.setSerializedModelFileName(modFname);    
+    } else {
+      m_currentMeta.setSerializedModelFileName(null);
+    }
     m_currentMeta.setOutputProbabilities(m_wOutputProbs.getSelection());
 
     if (!m_originalMeta.equals(m_currentMeta)) {

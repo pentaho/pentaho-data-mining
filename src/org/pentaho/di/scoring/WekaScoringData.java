@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.io.*;
 import java.util.zip.GZIPInputStream;
+import java.util.Vector;
 
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.trans.step.BaseStepData;
@@ -40,6 +41,7 @@ import weka.core.Instances;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Utils;
+import weka.core.xml.XStream;
 import weka.classifiers.Classifier;
 
 /**
@@ -97,22 +99,39 @@ public class WekaScoringData extends BaseStepData
    */
   public static WekaScoringModel loadSerializedModel(File modelFile) 
     throws Exception {
-    InputStream is = new FileInputStream(modelFile);
-    if (modelFile.getName().endsWith(".gz")) {
-      is = new GZIPInputStream(is);      
-    }
-    ObjectInputStream oi =
-      new ObjectInputStream(new BufferedInputStream(is));
-    
-    Object model = oi.readObject();
 
-    // if the model has been saved using the command line
-    // rather than the Explorer then this will fail (as
-    // the Evaluation class does not save the header). In
-    // this case we can't do much anyway, as we need the
-    // header for compatibility checking
-    Instances header = (Instances)oi.readObject();
-    oi.close();
+    Object model = null;
+    Instances header = null;
+    if (!modelFile.getName().toLowerCase().endsWith(".xstreammodel")) {
+      InputStream is = new FileInputStream(modelFile);
+      if (modelFile.getName().toLowerCase().endsWith(".gz")) {
+        is = new GZIPInputStream(is);      
+      }
+      ObjectInputStream oi =
+        new ObjectInputStream(new BufferedInputStream(is));
+      
+      model = oi.readObject();
+
+      // try and grab the header
+      header = (Instances)oi.readObject();
+      oi.close();
+      //    System.err.println(header);
+    } else {
+      System.err.println("Trying to load XML model...");
+      if (XStream.isPresent()) {
+        Vector v = (Vector) XStream.read(modelFile.getAbsolutePath());
+        System.err.println("Got vector...");
+        model = v.elementAt(0);
+        if (v.size() == 2) {
+          // try and grab the header
+          header = (Instances) v.elementAt(1);
+          System.err.println("Got header...");
+        }
+      } else {
+        throw new Exception("Can't load XML model because XStream is not "
+                            + "in the classpath!");
+      }
+    }
 
     WekaScoringModel wsm = WekaScoringModel.createScorer(model);
     wsm.setHeader(header);

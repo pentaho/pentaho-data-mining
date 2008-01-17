@@ -9,6 +9,8 @@
    <libraries>
     <library name="scoring.jar"/>
     <library name="weka.jar"/>
+    <library name="xstream-1.2.2.jar"/>
+    <library name="xpp3_min-1.1.3.4.O.jar"/>
     </libraries>
     
    <localized_category>
