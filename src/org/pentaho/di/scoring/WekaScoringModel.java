@@ -77,6 +77,13 @@ public abstract class WekaScoringModel implements Serializable {
    * @param model the Weka model
    */
   public abstract void setModel(Object model);
+
+  /**
+   * Get the weka model
+   *
+   * @return the Weka model as an object
+   */
+  public abstract Object getModel();
   
   /**
    * Return a classification. What this represents
@@ -110,6 +117,24 @@ public abstract class WekaScoringModel implements Serializable {
    * model
    */
   public abstract boolean isSupervisedLearningModel();
+
+  /**
+   * Returns true if the encapsulated Weka model can be updated
+   * incrementally in an instance by instance fashion.
+   *
+   * @return true if the encapsulated Weka model is incremental
+   * model
+   */
+  public abstract boolean isUpdateableModel();
+
+  /**
+   * Update (if possible) a model with the supplied Instance
+   *
+   * @param inst the Instance to update the model with
+   * @return true if the model was updated
+   * @exception Exception if an error occurs
+   */
+  public abstract boolean update(Instance inst) throws Exception;
 
   /**
    * Static factory method to create an instance of an

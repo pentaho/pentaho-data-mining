@@ -24,6 +24,7 @@ package org.pentaho.di.scoring;
 
 import weka.core.Instance;
 import weka.classifiers.Classifier;
+import weka.classifiers.UpdateableClassifier;
 
 /**
  * Subclass of WekaScoringModel that encapsulates a Classifier.
@@ -55,6 +56,15 @@ class WekaScoringClassifier extends WekaScoringModel {
   }
 
   /**
+   * Get the weka model
+   *
+   * @return the Weka model as an object
+   */
+  public Object getModel() {
+    return m_model;
+  }
+
+  /**
    * Return a classification (number for regression problems
    * or index of a class value for classification problems).
    *
@@ -65,6 +75,23 @@ class WekaScoringClassifier extends WekaScoringModel {
    */
   public double classifyInstance(Instance inst) throws Exception {
     return m_model.classifyInstance(inst);
+  }
+
+  /**
+   * Update (if possible) the model with the supplied instance
+   *
+   * @param inst the Instance to update with
+   * @return true if the update was updated successfully
+   * @exception Exception if an error occurs
+   */
+  public boolean update(Instance inst) throws Exception {
+    if (isUpdateableModel()) {
+      //      System.err.println("In update...");
+      ((UpdateableClassifier)m_model).updateClassifier(inst);
+      //      System.err.println(m_model);
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -86,6 +113,20 @@ class WekaScoringClassifier extends WekaScoringModel {
    */
   public boolean isSupervisedLearningModel() {
     return true;
+  }
+
+  /**
+   * Returns true if the classifier can be updated
+   * incrementally
+   *
+   * @return true if the classifier can be updated incrementally
+   */
+  public boolean isUpdateableModel() {
+    if (m_model instanceof UpdateableClassifier) {
+      return true;
+    }
+    
+    return false;
   }
 
   /**

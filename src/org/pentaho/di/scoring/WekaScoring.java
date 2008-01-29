@@ -104,7 +104,20 @@ public class WekaScoring extends BaseStep
     Object[] r = getRow();
 
     if (r == null) {
-      
+      // see if we have an incremental model that is to be saved somewhere.
+      if (m_meta.getUpdateIncrementalModel()) {
+        if (!Const.isEmpty(m_meta.getSavedModelFileName())) {
+          // try and save that sucker...
+          try {
+            WekaScoringData.saveSerializedModel(m_meta.getModel(),
+                                                new File(m_meta.getSavedModelFileName()));
+          } catch (Exception ex) {
+            throw new KettleException("Problem saving updated model to "
+                                      + "file!"); 
+          }
+        }
+      }
+
       setOutputDone();
       return false;
     }

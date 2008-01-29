@@ -67,12 +67,22 @@ public class WekaScoringMeta
 
   public static final String XML_TAG = "weka_scoring";
   
-  // File name of the serialized Weka model
+  // File name of the serialized Weka model to load/import
   private String m_modelFileName;
+
+  // File name to save incrementally updated model to
+  private String m_savedModelFileName;
   
   // True if predicted probabilities are to be output
   // (has no effect if the class (target is numeric)
   private boolean m_outputProbabilities;
+
+  // True if user has selected to update a model on the incoming
+  // data stream and the model supports incremental updates and
+  // there exists a column in the incoming data stream that has
+  // been matched successfully to the class attribute (if one 
+  // exists).
+  private boolean m_updateIncrementalModel;
 
   // Holds the actual Weka model (classifier or clusterer)
   private WekaScoringModel m_model;
@@ -88,7 +98,8 @@ public class WekaScoringMeta
   }
 
   /**
-   * Set the file name of the serialized Weka model
+   * Set the file name of the serialized Weka model to 
+   * load/import from
    *
    * @param mfile the file name
    */
@@ -97,12 +108,33 @@ public class WekaScoringMeta
   }
 
   /**
-   * Get the filename of the serialized Weka model
+   * Get the filename of the serialized Weka model to 
+   * load/import from
    *
    * @return the file name
    */
   public String getSerializedModelFileName() {
     return m_modelFileName;
+  }
+
+  /**
+   * Set the file name that the incrementally updated model
+   * will be saved to when the current stream of data terminates
+   *
+   * @param savedM the file name to save to
+   */
+  public void setSavedModelFileName(String savedM) {
+    m_savedModelFileName = savedM;
+  }
+
+  /**
+   * Get the file name that the incrementally updated model
+   * will be saved to when the current stream of data terminates
+   *
+   * @return the file name to save to
+   */
+  public String getSavedModelFileName() {
+    return m_savedModelFileName;
   }
 
   /**
@@ -146,6 +178,27 @@ public class WekaScoringMeta
   }
 
   /**
+   * Get whether the model is to be incrementally updated with
+   * each incoming row (after making a prediction for it).
+   *
+   * @return a true if the model is to be updated incrementally
+   * with each incoming row
+   */
+  public boolean getUpdateIncrementalModel() {
+    return m_updateIncrementalModel;
+  }
+
+  /**
+   * Set whether to update the model incrementally
+   *
+   * @param u true if the model should be updated with
+   * each incoming row (after predicting it)
+   */
+  public void setUpdateIncrementalModel(boolean u) {
+    m_updateIncrementalModel = u;
+  }
+
+  /**
    * Finds a mapping between the attributes that a Weka
    * model has been trained with and the incoming Kettle
    * row format. Returns an array of indices, where the
@@ -161,6 +214,29 @@ public class WekaScoringMeta
   public void mapIncomingRowMetaData(Instances header,
                                      RowMetaInterface inputRowMeta) {
     m_mappingIndexes = WekaScoringData.findMappings(header, inputRowMeta);
+    
+    // If updating of incremental models has been selected, then
+    // check on the ability to do this
+    if (m_updateIncrementalModel && 
+        m_model.isSupervisedLearningModel()) {
+      if (m_model.isUpdateableModel()) {
+        // Do we have the class mapped successfully to an incoming
+        // Kettle field
+        if (m_mappingIndexes[header.classIndex()] ==
+            WekaScoringData.NO_MATCH ||
+            m_mappingIndexes[header.classIndex()] ==
+            WekaScoringData.TYPE_MISMATCH) {
+          m_updateIncrementalModel = false;
+          System.err.println("Can't update model because there is no "
+                             +"match for the class attribute in the "
+                             +"incoming data stream!!");
+        }
+      } else {
+        m_updateIncrementalModel = false;
+        System.err.println("Model is not updateable. Can't learn "
+                           + "from incoming data stream!");
+      }
+    }
   }
 
   /**
@@ -185,6 +261,16 @@ public class WekaScoringMeta
     
     retval.append(XMLHandler.addTagValue("output_probabilities",
                                          m_outputProbabilities));
+    retval.append(XMLHandler.addTagValue("update_model",
+                                         m_updateIncrementalModel));
+
+    if (m_updateIncrementalModel) {
+      // any file name to save the changed model to?
+      if (!Const.isEmpty(m_savedModelFileName)) {
+        retval.append(XMLHandler.addTagValue("model_export_file_name",
+                                             m_savedModelFileName));
+      }
+    }
 
     // can we save the model as XML?
     if (m_model != null 
@@ -303,6 +389,18 @@ public class WekaScoringMeta
       } else {
         m_outputProbabilities = true;
       }
+
+      temp = XMLHandler.getTagValue(wekanode, "update_model");
+      if (temp.equalsIgnoreCase("N")) {
+        m_updateIncrementalModel = false;
+      } else {
+        m_updateIncrementalModel = true;
+      }
+
+      if (m_updateIncrementalModel) {
+        m_savedModelFileName = 
+          XMLHandler.getTagValue(wekanode, "model_export_file_name");
+      }
     }
   }
 
@@ -367,6 +465,14 @@ public class WekaScoringMeta
 
     m_outputProbabilities = 
       rep.getStepAttributeBoolean(id_step, 0, "output_probabilities");
+
+    m_updateIncrementalModel = 
+      rep.getStepAttributeBoolean(id_step, 0, "update_model");
+
+    if (m_updateIncrementalModel) {
+      m_savedModelFileName =
+        rep.getStepAttributeString(id_step, 0, "model_export_file_name");
+    }
   }
 
   /**
@@ -386,6 +492,21 @@ public class WekaScoringMeta
                           id_step, 0,
                           "output_probabilities",
                           m_outputProbabilities);
+
+    rep.saveStepAttribute(id_transformation,
+                          id_step, 0,
+                          "update_model",
+                          m_updateIncrementalModel);
+
+    if (m_updateIncrementalModel) {
+      // any file name to save the changed model to?
+      if (!Const.isEmpty(m_savedModelFileName)) {
+        rep.saveStepAttribute(id_transformation,
+                              id_step, 0,
+                              "model_export_file_name",
+                              m_savedModelFileName);
+      }
+    }
 
     if (m_model != null 
         && Const.isEmpty(m_modelFileName)) {

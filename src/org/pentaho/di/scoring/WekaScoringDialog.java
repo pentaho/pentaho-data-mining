@@ -110,6 +110,10 @@ public class WekaScoringDialog extends BaseStepDialog
   // for the output probabilities check box
   private FormData m_fdlOutputProbs, m_fdOutputProbs;
 
+  private Label m_wUpdateModelLab;
+  private Button m_wUpdateModel;
+  private FormData m_fdlUpdateModel, m_fdUpdateModel;
+
   // file name field
   private FormData m_fdlFilename, m_fdbFilename, m_fdFilename;
 
@@ -118,6 +122,20 @@ public class WekaScoringDialog extends BaseStepDialog
 
   // Combines text field with widget to insert environment variable
   private TextVar m_wFilename;
+
+  // label for the save file name field
+  private Label m_wlSaveFilename;
+
+  // save file name field
+  private FormData m_fdlSaveFilename, m_fdbSaveFilename, m_fdSaveFilename;
+
+  // Browse file button for saving incrementally updated model
+  private Button m_wbSaveFilename;
+
+  // Combines text field with widget to insert environment variable
+  // for saving incrementally updated models
+  private TextVar m_wSaveFilename;
+
 
   // file extension stuff
   /*  private Label m_wlExtension;
@@ -304,12 +322,72 @@ public class WekaScoringDialog extends BaseStepDialog
     m_fdOutputProbs.top = new FormAttachment(m_wFilename, margin);
     m_fdOutputProbs.right = new FormAttachment(100, 0);
     m_wOutputProbs.setLayoutData(m_fdOutputProbs);
-    m_wOutputProbs.addSelectionListener(new SelectionAdapter() {
+    
+
+    m_wUpdateModelLab = new Label(wFileComp, SWT.RIGHT);
+    m_wUpdateModelLab.
+      setText(Messages.getString("WekaScoringDialog.UpdateModel.Label"));
+    props.setLook(m_wUpdateModelLab);
+    m_fdlUpdateModel = new FormData();
+    m_fdlUpdateModel.left = new FormAttachment(0, 0);
+    m_fdlUpdateModel.top  = new FormAttachment(m_wOutputProbs, margin);
+    m_fdlUpdateModel.right= new FormAttachment(middle, -margin);
+    m_wUpdateModelLab.setLayoutData(m_fdlUpdateModel);
+    m_wUpdateModel = new Button(wFileComp, SWT.CHECK);
+    props.setLook(m_wUpdateModel);
+    m_fdUpdateModel = new FormData();
+    m_fdUpdateModel.left = new FormAttachment(middle, 0);
+    m_fdUpdateModel.top = new FormAttachment(m_wOutputProbs, margin);
+    m_fdUpdateModel.right = new FormAttachment(100, 0);
+    m_wUpdateModel.setLayoutData(m_fdUpdateModel);
+    m_wUpdateModel.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
           m_currentMeta.setChanged();
+          m_wbSaveFilename.setEnabled(m_wUpdateModel.getSelection());
+          m_wSaveFilename.setEnabled(m_wUpdateModel.getSelection());
         }
       });
 
+    //----------------------------
+
+    // Save filename line
+    m_wlSaveFilename = new Label(wFileComp, SWT.RIGHT);
+    m_wlSaveFilename.
+      setText(Messages.getString("WekaScoringDialog.SaveFilename.Label"));
+    props.setLook(m_wlSaveFilename);
+    m_fdlSaveFilename = new FormData();
+    m_fdlSaveFilename.left = new FormAttachment(0, 0);
+    m_fdlSaveFilename.top = new FormAttachment(m_wUpdateModel, margin);
+    m_fdlSaveFilename.right = new FormAttachment(middle, -margin);
+    m_wlSaveFilename.setLayoutData(m_fdlSaveFilename);
+
+    // Save file browse button
+    m_wbSaveFilename=new Button(wFileComp, SWT.PUSH| SWT.CENTER);
+    props.setLook(m_wbSaveFilename);
+    m_wbSaveFilename.setText(Messages.getString("System.Button.Browse"));
+    m_fdbSaveFilename=new FormData();
+    m_fdbSaveFilename.right = new FormAttachment(100, 0);
+    m_fdbSaveFilename.top = new FormAttachment(m_wUpdateModel, 0);
+    m_wbSaveFilename.setLayoutData(m_fdbSaveFilename);
+    m_wbSaveFilename.setEnabled(false);
+ 
+    // combined text field and env variable widget
+    m_wSaveFilename = new TextVar(transMeta, wFileComp, 
+                                  SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    props.setLook(m_wSaveFilename);
+    m_wSaveFilename.addModifyListener(lsMod);
+    m_fdSaveFilename=new FormData();
+    m_fdSaveFilename.left = new FormAttachment(middle, 0);
+    m_fdSaveFilename.top = new FormAttachment(m_wUpdateModel, margin);
+    m_fdSaveFilename.right = new FormAttachment(m_wbSaveFilename, -margin);
+    m_wSaveFilename.setLayoutData(m_fdSaveFilename);
+    m_wSaveFilename.setEnabled(false);
+
+
+    //-----------------
+
+
+    
     // Fields mapping tab
     m_wFieldsTab = new CTabItem(m_wTabFolder, SWT.NONE);
     m_wFieldsTab.
@@ -532,12 +610,61 @@ public class WekaScoringDialog extends BaseStepDialog
              //             }
 
              // try to load model file and display model
-             if (loadModel()) {
+             if (!loadModel()) {
                System.err.println("Problem loading model file!");
              }
            }
          }
        });
+
+
+
+    m_wbSaveFilename.addSelectionListener(
+       new SelectionAdapter() {
+         public void widgetSelected(SelectionEvent e) {
+           FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+           String[] extensions = null;
+           String[] filterNames = null;
+           if (XStream.isPresent()) {
+             extensions = new String[3];
+             filterNames = new String[3];
+             extensions[0] = "*.model";
+             filterNames[0] = 
+               Messages.getString("WekaScoringDialog.FileType.ModelFileBinary");
+             extensions[1] = "*.xstreammodel";
+             filterNames[1] = 
+               Messages.getString("WekaScoringDialog.FileType.ModelFileXML");
+             extensions[2] = "*";
+             filterNames[2] = 
+               Messages.getString("System.FileType.AllFiles");
+           } else {
+             extensions = new String[2];
+             extensions[0] = "*.model";
+             filterNames[0] = 
+               Messages.getString("WekaScoringDialog.FileType.ModelFileBinary");
+             extensions[1] = "*";
+             filterNames[1] = 
+               Messages.getString("System.FileType.AllFiles");
+           }
+           dialog.setFilterExtensions(extensions);
+           if (m_wSaveFilename.getText() != null) {
+             dialog.setFileName(transMeta.
+                                environmentSubstitute(m_wFilename.
+                                                      getText()));
+           }
+           dialog.setFilterNames(filterNames);
+
+           if (dialog.open() != null) {
+
+             m_wSaveFilename.setText(dialog.getFilterPath()
+                                     + System.getProperty("file.separator")
+                                     + dialog.getFileName());
+           }
+         }
+       });
+
+
+
 
     m_wTabFolder.setSelection(0);
 
@@ -572,6 +699,7 @@ public class WekaScoringDialog extends BaseStepDialog
         m_currentMeta.setModel(tempM);
 
         checkAbilityToProduceProbabilities(tempM);
+        checkAbilityToUpdateModelIncrementally(tempM);
 
         // see if we can find a previous step and set up the
         // mappings
@@ -676,7 +804,15 @@ public class WekaScoringDialog extends BaseStepDialog
     if (m_currentMeta.getSerializedModelFileName() != null) {
       m_wFilename.setText(m_currentMeta.getSerializedModelFileName());
     }
+
     m_wOutputProbs.setSelection(m_currentMeta.getOutputProbabilities());
+    m_wUpdateModel.setSelection(m_currentMeta.getUpdateIncrementalModel());
+
+    if (m_wUpdateModel.getSelection()) {
+      if (m_currentMeta.getSavedModelFileName() != null) {
+        m_wSaveFilename.setText(m_currentMeta.getSavedModelFileName());
+      }
+    }
     
     // Grab model if it is available
     WekaScoringModel tempM = m_currentMeta.getModel();
@@ -686,9 +822,29 @@ public class WekaScoringDialog extends BaseStepDialog
       // Grab mappings if available
       mappingString(tempM);
       checkAbilityToProduceProbabilities(tempM);
+      checkAbilityToUpdateModelIncrementally(tempM);
     } else {
       // try loading the model
       loadModel();
+    }
+  }
+
+  private void checkAbilityToUpdateModelIncrementally(WekaScoringModel tempM) {
+    if (!tempM.isUpdateableModel()) {
+      m_wUpdateModel.setSelection(false);
+      m_wUpdateModel.setEnabled(false);
+      // disable the save field and button
+      m_wbSaveFilename.setEnabled(false);
+      m_wSaveFilename.setEnabled(false);
+      // clear the text field
+      m_wSaveFilename.setText("");
+
+    } else {
+      // enable the save field and button if the check box is selected
+      if(m_wUpdateModel.getSelection()) {
+        m_wbSaveFilename.setEnabled(true);
+        m_wSaveFilename.setEnabled(true);
+      }
     }
   }
 
@@ -715,7 +871,6 @@ public class WekaScoringDialog extends BaseStepDialog
           m_wOutputProbs.setSelection(false);
           m_wOutputProbs.setEnabled(false);
         } else {
-          m_wOutputProbs.setSelection(false);
           m_wOutputProbs.setEnabled(true);
         }
       }
@@ -746,6 +901,15 @@ public class WekaScoringDialog extends BaseStepDialog
       m_currentMeta.setSerializedModelFileName(null);
     }
     m_currentMeta.setOutputProbabilities(m_wOutputProbs.getSelection());
+    m_currentMeta.setUpdateIncrementalModel(m_wUpdateModel.getSelection());
+
+    if (m_currentMeta.getUpdateIncrementalModel()) {
+      if (!Const.isEmpty(m_wSaveFilename.getText())) {
+          String modSaveFname = transMeta.
+            environmentSubstitute(m_wSaveFilename.getText());
+          m_currentMeta.setSavedModelFileName(modSaveFname);
+        }
+    }
 
     if (!m_originalMeta.equals(m_currentMeta)) {
       m_currentMeta.setChanged();

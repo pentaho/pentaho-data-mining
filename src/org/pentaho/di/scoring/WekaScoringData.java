@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.io.*;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import java.util.Vector;
 
 import org.pentaho.di.core.row.RowMetaInterface;
@@ -115,7 +116,7 @@ public class WekaScoringData extends BaseStepData
       // try and grab the header
       header = (Instances)oi.readObject();
       oi.close();
-      //    System.err.println(header);
+      //      System.err.println(header);
     } else {
       System.err.println("Trying to load XML model...");
       if (XStream.isPresent()) {
@@ -136,6 +137,24 @@ public class WekaScoringData extends BaseStepData
     WekaScoringModel wsm = WekaScoringModel.createScorer(model);
     wsm.setHeader(header);
     return wsm;
+  }
+
+  public static void saveSerializedModel(WekaScoringModel wsm, File saveTo)
+    throws Exception {
+
+    Object model = wsm.getModel();
+    Instances header = wsm.getHeader();
+    OutputStream os = new FileOutputStream(saveTo);
+    
+    if (saveTo.getName().toLowerCase().endsWith(".gz")) {
+      os = new GZIPOutputStream(os);      
+    }
+    ObjectOutputStream oos =
+      new ObjectOutputStream(new BufferedOutputStream(os));
+
+    oos.writeObject(model);
+    oos.writeObject(header);
+    oos.close();    
   }
 
   /**
@@ -246,7 +265,14 @@ public class WekaScoringData extends BaseStepData
     Instance toScore = constructInstance(inputMeta, inputRow, 
                                          mappingIndexes, model);
     double[] prediction = model.distributionForInstance(toScore);
-    // First copy the input data to the new result...                                                                                                 
+
+    // Update the model??
+    if (meta.getUpdateIncrementalModel() &&
+        model.isUpdateableModel() && 
+        !toScore.isMissing(toScore.classIndex())) {
+      model.update(toScore);
+    }
+    // First copy the input data to the new result...
     Object[] resultRow = 
       RowDataUtil.resizeArray(inputRow, outputMeta.size()); 
     int index = inputMeta.size();

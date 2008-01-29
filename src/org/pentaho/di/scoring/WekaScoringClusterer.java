@@ -54,6 +54,15 @@ class WekaScoringClusterer extends WekaScoringModel {
   public void setModel(Object model) {
       m_model = (Clusterer)model;
   }
+
+  /**
+   * Get the weka model
+   *
+   * @return the Weka model as an object
+   */
+  public Object getModel() {
+    return m_model;
+  }
   
   /**
    * Return a classification (cluster that the test instance
@@ -65,6 +74,18 @@ class WekaScoringClusterer extends WekaScoringModel {
    */
   public double classifyInstance(Instance inst) throws Exception {
     return (double)m_model.clusterInstance(inst);
+  }
+
+  /**
+   * Update (if possible) the model with the supplied instance
+   *
+   * @param inst the Instance to update with
+   * @return true if the update was updated successfully
+   * @exception Exception if an error occurs
+   */
+  public boolean update(Instance inst) throws Exception {
+    // No clusters are incremental... yet.
+    return false;
   }
   
   /**
@@ -85,6 +106,16 @@ class WekaScoringClusterer extends WekaScoringModel {
    * @return false
    */
   public boolean isSupervisedLearningModel() {
+    return false;
+  }
+
+  /**
+   * Returns false. No clusterers in Weka are 
+   * incremental... yet
+   *
+   * @return false
+   */
+  public boolean isUpdateableModel() {
     return false;
   }
 
