@@ -840,6 +840,7 @@ public class WekaScoringDialog extends BaseStepDialog
       m_wSaveFilename.setText("");
 
     } else {
+      m_wUpdateModel.setEnabled(true);
       // enable the save field and button if the check box is selected
       if(m_wUpdateModel.getSelection()) {
         m_wbSaveFilename.setEnabled(true);
@@ -908,7 +909,10 @@ public class WekaScoringDialog extends BaseStepDialog
           String modSaveFname = transMeta.
             environmentSubstitute(m_wSaveFilename.getText());
           m_currentMeta.setSavedModelFileName(modSaveFname);
-        }
+      } else {
+        // make sure that save filename is empty
+        m_currentMeta.setSavedModelFileName("");
+      }
     }
 
     if (!m_originalMeta.equals(m_currentMeta)) {
