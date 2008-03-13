@@ -24,6 +24,7 @@ package org.pentaho.di.scoring;
 
 import weka.core.Instance;
 import weka.clusterers.Clusterer;
+import weka.clusterers.UpdateableClusterer;
 import weka.clusterers.DensityBasedClusterer;
 
 /**
@@ -84,7 +85,13 @@ class WekaScoringClusterer extends WekaScoringModel {
    * @exception Exception if an error occurs
    */
   public boolean update(Instance inst) throws Exception {
-    // No clusters are incremental... yet.
+    // Only cobweb is updateable at present
+    if (isUpdateableModel()) {
+      //      System.err.println("In update...");
+      ((UpdateableClusterer)m_model).updateClusterer(inst);
+      //      System.err.println(m_model);
+      return true;
+    }
     return false;
   }
   
@@ -116,6 +123,10 @@ class WekaScoringClusterer extends WekaScoringModel {
    * @return false
    */
   public boolean isUpdateableModel() {
+    if (m_model instanceof UpdateableClusterer) {
+      return true;
+    }
+    
     return false;
   }
 
