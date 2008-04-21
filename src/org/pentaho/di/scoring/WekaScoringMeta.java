@@ -460,6 +460,7 @@ public class WekaScoringMeta
         }
       } catch (Exception ex) {
         ex.printStackTrace();
+        success = false;
       }
     }
 
