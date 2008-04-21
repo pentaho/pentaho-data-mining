@@ -526,6 +526,7 @@ public class WekaScoringMeta
                               id_step, 0,
                               "weka_scoring_model",
                               base64XMLModel);
+        oo.close();
       } catch (Exception ex) {
         System.err.println("Problem serializing model to base64 (Meta.saveRep())");
       }
