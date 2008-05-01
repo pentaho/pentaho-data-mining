@@ -89,7 +89,6 @@ public class WekaScoringDialog extends BaseStepDialog
   private Text m_wStepname;
   private FormData m_fdlStepname;
   private FormData m_fdStepname;
-  private Label m_wlFields;
 
   private FormData m_fdTabFolder;
   private FormData m_fdFileComp, m_fdFieldsComp, m_fdModelComp;
