@@ -317,7 +317,16 @@ public class WekaScoringMeta
     }
     
     return false;
-  }  
+  }
+
+  /**
+   * Hash code method
+   *
+   * @return the hash code for this object
+   */
+  public int hashCode() {
+    return getXML().hashCode();
+  }
 
   /**
    * Clone this step's meta data
@@ -368,7 +377,7 @@ public class WekaScoringMeta
       try {
         String base64modelXML = XMLHandler.getTagValue(wekanode,
                                                        "weka_scoring_model");
-        System.err.println("Got base64 string...");
+        //        System.err.println("Got base64 string...");
         //            System.err.println(base64modelXML);
         deSerializeBase64Model(base64modelXML);
         success = true;
@@ -402,7 +411,31 @@ public class WekaScoringMeta
           XMLHandler.getTagValue(wekanode, "model_export_file_name");
       }
     }
+
+    // check the model status. If no model and we have
+    // a file name, try and load here. Otherwise, loading
+    // wont occur until the transformation starts or the
+    // user opens the configuration gui in Spoon. This affects
+    // the result of the getFields method and has an impact
+    // on downstream steps that need to know what we produce
+    if (m_model == null && !Const.isEmpty(m_modelFileName)) {
+      try {
+        loadModelFile();
+      } catch (Exception ex) {
+        throw new KettleXMLException("Problem de-serializing model "
+                                          + "file using supplied file name!"); 
+      }
+    }
   }
+
+  protected void loadModelFile() throws Exception {
+    File modelFile = 
+      new File(m_modelFileName);
+    if (modelFile.exists()) {
+      m_model = WekaScoringData.loadSerializedModel(modelFile);
+    }
+  }
+
 
   protected void deSerializeBase64Model(String base64modelXML) 
     throws Exception {
@@ -473,6 +506,21 @@ public class WekaScoringMeta
     if (m_updateIncrementalModel) {
       m_savedModelFileName =
         rep.getStepAttributeString(id_step, 0, "model_export_file_name");
+    }
+    
+    // check the model status. If no model and we have
+    // a file name, try and load here. Otherwise, loading
+    // wont occur until the transformation starts or the
+    // user opens the configuration gui in Spoon. This affects
+    // the result of the getFields method and has an impact
+    // on downstream steps that need to know what we produce
+    if (m_model == null && !Const.isEmpty(m_modelFileName)) {
+      try {
+        loadModelFile();
+      } catch (Exception ex) {
+        throw new KettleException("Problem de-serializing model "
+                                  + "file using supplied file name!"); 
+      }
     }
   }
 
