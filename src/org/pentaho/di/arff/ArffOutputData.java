@@ -597,7 +597,8 @@ public class ArffOutputData extends BaseStepData
     byte[] nomVal = null;
     while (ksi.hasNext()) {
       String next = ksi.next();
-      next = Utils.quote(next);
+      // value was quoted when added into hash table.
+      //      next = Utils.quote(next);
       if (m_hasEncoding && encoding != null) {
         if (Const.isEmpty(encoding)) {
           nomVal = next.getBytes();
