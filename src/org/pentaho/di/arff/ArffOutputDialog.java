@@ -773,6 +773,9 @@ public class ArffOutputDialog extends BaseStepDialog
   private void cancel() {
     stepname = null;
     m_currentMeta.setChanged(changed);
+
+    // revert to original state of the fields
+    m_currentMeta.setOutputFields(m_originalMeta.getOutputFields());
     dispose();
   }
   
