@@ -574,6 +574,7 @@ public class WekaScoringDialog extends BaseStepDialog
                Messages.getString("System.FileType.AllFiles");
            } else {
              extensions = new String[2];
+             filterNames = new String[2];
              extensions[0] = "*.model";
              filterNames[0] = 
                Messages.getString("WekaScoringDialog.FileType.ModelFileBinary");
