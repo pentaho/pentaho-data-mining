@@ -37,6 +37,7 @@ import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.RowDataUtil; 
+import org.pentaho.di.core.logging.LogWriter;
 
 import weka.core.Instances;
 import weka.core.Attribute;
@@ -69,7 +70,7 @@ public class WekaScoringData extends BaseStepData
 
   // holds values for instances constructed for prediction
   private double[] m_vals = null;
-  
+
   public WekaScoringData() {
     super();
   }
@@ -118,15 +119,17 @@ public class WekaScoringData extends BaseStepData
       oi.close();
       //      System.err.println(header);
     } else {
-      System.err.println("Trying to load XML model...");
+      LogWriter.getInstance().logBasic("[WekaScoringData]",
+                     Messages.getString("WekaScoringData.Log.LoadXMLModel"));
+      //      System.err.println("Trying to load XML model...");
       if (XStream.isPresent()) {
         Vector v = (Vector) XStream.read(modelFile.getAbsolutePath());
-        System.err.println("Got vector...");
+        //        System.err.println("Got vector...");
         model = v.elementAt(0);
         if (v.size() == 2) {
           // try and grab the header
           header = (Instances) v.elementAt(1);
-          System.err.println("Got header...");
+          //          System.err.println("Got header...");
         }
       } else {
         throw new Exception("Can't load XML model because XStream is not "

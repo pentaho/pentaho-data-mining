@@ -549,7 +549,9 @@ public class WekaScoringDialog extends BaseStepDialog
     m_wFilename.addSelectionListener(new SelectionAdapter() {
         public void widgetDefaultSelected(SelectionEvent e) {
           if (!loadModel()) {
-            System.err.println("Problem loading model file!");
+            log.logError("[WekaScoringDialog]",
+                         Messages.getString("WekaScoringDialog.Log.FileLoadingError"));
+            //            System.err.println("Problem loading model file!");
           }
         }
       });
@@ -611,7 +613,9 @@ public class WekaScoringDialog extends BaseStepDialog
 
              // try to load model file and display model
              if (!loadModel()) {
-               System.err.println("Problem loading model file!");
+               log.logError("[WekaScoringDialog]",
+                            Messages.getString("WekaScoringDialog.Log.FileLoadingError"));
+               //               System.err.println("Problem loading model file!");
              }
            }
          }
@@ -688,7 +692,23 @@ public class WekaScoringDialog extends BaseStepDialog
    */
   private boolean loadModel() {
     String filename = m_wFilename.getText();
-    File modelFile = new File(filename);
+    if (Const.isEmpty(filename)) {
+      return false;
+    }
+    String modName = transMeta.environmentSubstitute(filename);
+    File modelFile = null;
+    if (modName.startsWith("file:")) {
+      try {
+        modelFile = new File(new java.net.URI(modName));
+    } catch (Exception ex) {
+        //      System.err.println("Malformed URI");
+        log.logError("[WekaScoringDialog]",
+                     Messages.getString("WekaScoringDialog.Log.MalformedURI"));
+        return false;
+      }
+    } else {
+      modelFile = new File(modName);
+    }
     boolean success = false;
 
     if (!Const.isEmpty(filename) && modelFile.exists()) {
@@ -706,6 +726,8 @@ public class WekaScoringDialog extends BaseStepDialog
         mappingString(tempM);
         success = true;
       } catch (Exception ex) {
+        log.logError("[WekaScoringDialog]", 
+                     Messages.getString("WekaScoringDialog.Log.FileLoadingError"));
         //      System.err.println("Problem loading model file...");
       }
     }
@@ -895,9 +917,9 @@ public class WekaScoringDialog extends BaseStepDialog
     stepname = m_wStepname.getText(); // return value
     
     if (!Const.isEmpty(m_wFilename.getText())) {
-      String modFname = transMeta.
-        environmentSubstitute(m_wFilename.getText());
-      m_currentMeta.setSerializedModelFileName(modFname);    
+      /*      String modFname = transMeta.
+              environmentSubstitute(m_wFilename.getText()); */
+      m_currentMeta.setSerializedModelFileName(m_wFilename.getText());    
     } else {
       m_currentMeta.setSerializedModelFileName(null);
     }

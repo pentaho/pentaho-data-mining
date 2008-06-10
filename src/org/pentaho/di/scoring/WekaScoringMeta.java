@@ -50,6 +50,7 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.core.logging.LogWriter;
 import org.w3c.dom.Node;
 
 import weka.core.Instances;
@@ -90,11 +91,16 @@ public class WekaScoringMeta
   // used to map attribute indices to incoming field indices
   private int[] m_mappingIndexes;
 
+  // logging
+  protected LogWriter m_log;
+
   /**
    * Creates a new <code>WekaScoringMeta</code> instance.
    */
   public WekaScoringMeta() {
     super(); // allocate BaseStepMeta
+
+    m_log = LogWriter.getInstance();
   }
 
   /**
@@ -227,14 +233,16 @@ public class WekaScoringMeta
             m_mappingIndexes[header.classIndex()] ==
             WekaScoringData.TYPE_MISMATCH) {
           m_updateIncrementalModel = false;
-          System.err.println("Can't update model because there is no "
+          m_log.logError("[WekaScoringMeta]", Messages.getString("WekaScoringMeta.Log.NoMatchForClass"));
+          /*          System.err.println("Can't update model because there is no "
                              +"match for the class attribute in the "
-                             +"incoming data stream!!");
+                             +"incoming data stream!!"); */
         }
       } else {
         m_updateIncrementalModel = false;
-        System.err.println("Model is not updateable. Can't learn "
-                           + "from incoming data stream!");
+        m_log.logError("[WekaScoringMeta]", Messages.getString("WekaScoringMeta.Log.ModelNotUpdateable"));
+        /*        System.err.println("Model is not updateable. Can't learn "
+                  + "from incoming data stream!"); */
       }
     }
   }
@@ -286,15 +294,23 @@ public class WekaScoringMeta
         byte[] model = bao.toByteArray();
         String base64model = XMLHandler.addTagValue("weka_scoring_model",
                                                     model);
-        System.err.println("Size of base64 model "+base64model.length());
+        m_log.logDebug("[WekaScoringMeta]",
+                       Messages.getString("WekaScoringMeta.Log.SizeOfModel")
+                       + " " + base64model.length());
+        //        System.err.println("Size of base64 model "+base64model.length());
         retval.append(base64model);
         oo.close();
       } catch (Exception ex) { 
-        System.err.println("Problem serializing model to base64 (Meta.getXML())");
+        m_log.logError("[WekaScoringMeta]", 
+                       Messages.getString("WekaScoringMeta.Log.Base64SerializationProblem"));
+        //        System.err.println("Problem serializing model to base64 (Meta.getXML())");
       }
     } else {
-      System.err.println("Model will be sourced from file "
-                         + m_modelFileName);
+      m_log.logBasic("[WekaScoringMeta]", 
+                     Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
+                     + " " + m_modelFileName);
+      /*      System.err.println("Model will be sourced from file "
+              + m_modelFileName); */
       // save the model file name
       retval.append(XMLHandler.addTagValue("model_file_name",
                                            m_modelFileName));
@@ -342,7 +358,9 @@ public class WekaScoringMeta
         WekaScoringModel copy = (WekaScoringModel)so.getObject();
         retval.setModel(copy);
       } catch (Exception ex) {
-        System.err.println("Problem deep copying scoring model (meta.clone())");
+        m_log.logError("[WekaScoringMeta]",
+                       Messages.getString("WekaScoringMeta.Log.DeepCopyingError"));
+        //        System.err.println("Problem deep copying scoring model (meta.clone())");
       }
     }
     return retval;
@@ -381,7 +399,9 @@ public class WekaScoringMeta
         //            System.err.println(base64modelXML);
         deSerializeBase64Model(base64modelXML);
         success = true;
-        System.err.println("Successfully de-serialized model!");
+        //        System.err.println("Successfully de-serialized model!");
+        m_log.logDetailed("[WekaScoringMeta]",
+                          Messages.getString("WekaScoringMeta.Log.DeserializationSuccess"));
       } catch (Exception ex) {
         success = false;
       }
@@ -482,7 +502,10 @@ public class WekaScoringMeta
       // try and get the model itself...
       try {
         String base64XMLModel = rep.getStepAttributeString(id_step, 0, "weka_scoring_model");
-        System.err.println("Size of base64 string read " + base64XMLModel.length());
+        m_log.logDebug("[WekaScoringMeta]",
+                       Messages.getString("WekaScoringMeta.Log.SizeOfModel")
+                       + " " + base64XMLModel.length());
+          //        System.err.println("Size of base64 string read " + base64XMLModel.length());
         //        System.err.println(xmlModel);
         if (base64XMLModel != null && base64XMLModel.length() > 0) {
           // try to de-serialize
@@ -576,13 +599,18 @@ public class WekaScoringMeta
                               base64XMLModel);
         oo.close();
       } catch (Exception ex) {
-        System.err.println("Problem serializing model to base64 (Meta.saveRep())");
+        m_log.logError("[WekaScoringMeta]", 
+                       Messages.getString("WekaScoringDialog.Log.Base64SerializationProblem"));
+        //        System.err.println("Problem serializing model to base64 (Meta.saveRep())");
       }
     } else {
       // either XStream is not present or user wants to source from
       // file
-      System.err.println("Model will be sourced from file "
-                         + m_modelFileName);
+      m_log.logBasic("[WekaScoringMeta]",
+                     Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
+                     + " " + m_modelFileName);
+      /*      System.err.println("Model will be sourced from file "
+              + m_modelFileName); */
       rep.saveStepAttribute(id_transformation, 
                             id_step, 0, 
                             "model_file_name",
@@ -632,7 +660,8 @@ public class WekaScoringMeta
                           valueType);
           newVM.setOrigin(origin);
           row.addValueMeta(newVM);
-          System.err.println("Adding " + newVM.getName());
+          //          System.err.println("Adding " + newVM.getName());
+          m_log.logDebug("[WekaScoringMeta]", "Adding " + newVM.getName());
         } else {
           for (int i = 0; i < header.classAttribute().numValues(); i++) {
             String classVal = header.classAttribute().value(i);
@@ -642,7 +671,8 @@ public class WekaScoringMeta
                             ValueMetaInterface.TYPE_NUMBER);
             newVM.setOrigin(origin);
             row.addValueMeta(newVM);
-            System.err.println("Adding "+newVM.getName());
+            m_log.logDebug("[WekaScoringMeta]", "Adding " + newVM.getName());
+            //            System.err.println("Adding "+newVM.getName());
           }
         }
       } else {
@@ -656,7 +686,8 @@ public class WekaScoringMeta
                               ValueMetaInterface.TYPE_NUMBER);
               newVM.setOrigin(origin);
               row.addValueMeta(newVM);
-              System.err.println("Adding "+newVM.getName());              
+              m_log.logDebug("[WekaScoringMeta]", "Adding " + newVM.getName());
+              //              System.err.println("Adding "+newVM.getName());              
             }
           } catch (Exception ex) {
             throw new KettleStepException("Problem with clustering model: "
@@ -668,7 +699,8 @@ public class WekaScoringMeta
                           ValueMetaInterface.TYPE_NUMBER);
           newVM.setOrigin(origin);
           row.addValueMeta(newVM);
-          System.err.println("Adding " + newVM.getName());
+          m_log.logDebug("[WekaScoringMeta]", "Adding " + newVM.getName());
+          //          System.err.println("Adding " + newVM.getName());
         }
       }
     }

@@ -71,6 +71,8 @@ public class WekaScoring extends BaseStep
   private WekaScoringMeta m_meta;
   private WekaScoringData m_data;
 
+  private TransMeta m_transMeta;
+
   /**
    * Creates a new <code>WekaScoring</code> instance.
    *
@@ -84,6 +86,7 @@ public class WekaScoring extends BaseStep
                          StepDataInterface stepDataInterface, 
                          int copyNr, TransMeta transMeta, Trans trans) {
     super(stepMeta, stepDataInterface, copyNr, transMeta, trans);
+    m_transMeta = transMeta;
   }
 
   /**
@@ -139,8 +142,18 @@ public class WekaScoring extends BaseStep
         }
 
         // Check that the specified file exists (on this file system)
-        File modelFile = 
-          new File(m_meta.getSerializedModelFileName());
+        String modName = m_transMeta.environmentSubstitute(m_meta.getSerializedModelFileName());
+        File modelFile = null;
+        if (modName.startsWith("file:")) {
+          try {
+            modelFile = 
+              new File(new java.net.URI(modName));
+          } catch (Exception ex) {
+            throw new KettleException("Malformed URI for model file");
+          }
+        } else {
+          modelFile = new File(modName);
+        }
         if (!modelFile.exists()) {
           throw new KettleException("Serialized model file does "
                                     + "not exist on disk!");
