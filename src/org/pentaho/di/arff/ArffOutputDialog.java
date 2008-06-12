@@ -786,10 +786,10 @@ public class ArffOutputDialog extends BaseStepDialog
 
     stepname = m_wStepname.getText(); // return value
 
-    String arffOutName = 
-      transMeta.environmentSubstitute(m_wFilename.getText());
+    /*    String arffOutName = 
+          transMeta.environmentSubstitute(m_wFilename.getText()); */
 
-    m_currentMeta.setFileName(arffOutName);
+    m_currentMeta.setFileName(m_wFilename.getText());
 
     String relName = m_wRelationName.getText();
     m_currentMeta.setRelationName(relName);

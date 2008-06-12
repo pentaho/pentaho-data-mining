@@ -68,7 +68,7 @@ public class ArffOutputData extends BaseStepData
   protected Map<String, String>[] m_nominalVals;
 
   protected File m_tempFile;
-  protected String m_headerFileName;
+  protected File m_headerFile;
   protected OutputStream m_dataOut;
   protected OutputStream m_headerOut;
 
@@ -182,8 +182,17 @@ public class ArffOutputData extends BaseStepData
    * @exception IOException if an error occurs
    */
   public void openFiles(String filename) throws IOException {
-    m_headerFileName = filename;
-    OutputStream os = new FileOutputStream(m_headerFileName);
+    if (filename.startsWith("file:")) {
+      try {
+        m_headerFile = new File(new java.net.URI(filename));
+      } catch (Exception ex) {
+        throw new IOException("Malformed URI for arff file");
+      }
+    } else {
+      m_headerFile = new File(filename);
+    }
+    //    m_headerFile = filename;
+    OutputStream os = new FileOutputStream(m_headerFile);
     m_headerOut = new BufferedOutputStream(os);
 
     // tempfile to write the data to.
@@ -428,7 +437,7 @@ public class ArffOutputData extends BaseStepData
     try {
       is = new FileInputStream(m_tempFile);
       // open the header file for appending
-      os = new FileOutputStream(m_headerFileName, true);
+      os = new FileOutputStream(m_headerFile, true);
       
       while (true) {
         synchronized (m_buffer) {

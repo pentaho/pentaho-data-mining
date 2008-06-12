@@ -63,6 +63,8 @@ public class ArffOutput extends BaseStep
 
   private ArffOutputMeta m_meta;
   private ArffOutputData m_data;
+  
+  private TransMeta m_transMeta;
 
   /**
    * Creates a new <code>ArffOutput</code> instance.
@@ -77,6 +79,7 @@ public class ArffOutput extends BaseStep
                          StepDataInterface stepDataInterface, 
                          int copyNr, TransMeta transMeta, Trans trans) {
     super(stepMeta, stepDataInterface, copyNr, transMeta, trans);
+    m_transMeta = transMeta;
   }
 
   /**
@@ -155,7 +158,8 @@ public class ArffOutput extends BaseStep
       }
 
       try {
-        m_data.openFiles(m_meta.getFileName());
+        String modName = m_transMeta.environmentSubstitute(m_meta.getFileName());        
+        m_data.openFiles(modName);
       } catch (IOException ex) {
         throw new KettleException("Unable to open file(s)...", ex);
       }
