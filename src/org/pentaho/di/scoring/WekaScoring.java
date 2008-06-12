@@ -112,8 +112,19 @@ public class WekaScoring extends BaseStep
         if (!Const.isEmpty(m_meta.getSavedModelFileName())) {
           // try and save that sucker...
           try {
-            WekaScoringData.saveSerializedModel(m_meta.getModel(),
-                                                new File(m_meta.getSavedModelFileName()));
+            String modName = m_transMeta.environmentSubstitute(m_meta.getSavedModelFileName());
+            File updatedModelFile = null;
+            if (modName.startsWith("file:")) {
+              try {
+                updatedModelFile = 
+                  new File(new java.net.URI(modName));
+              } catch (Exception ex) {
+                throw new KettleException("Malformed URI for updated model file");
+              }
+            } else {
+              updatedModelFile = new File(modName);
+            }
+            WekaScoringData.saveSerializedModel(m_meta.getModel(), updatedModelFile);
           } catch (Exception ex) {
             throw new KettleException("Problem saving updated model to "
                                       + "file!"); 

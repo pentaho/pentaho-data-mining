@@ -544,6 +544,13 @@ public class WekaScoringDialog extends BaseStepDialog
         }
       });
 
+    m_wSaveFilename.addModifyListener(new ModifyListener() {
+        public void modifyText(ModifyEvent e) {
+          m_wSaveFilename.setToolTipText(transMeta.
+                                         environmentSubstitute(m_wSaveFilename.getText()));
+        }
+      });
+
     // listen to the file name text box and try to load a model
     // if the user presses enter
     m_wFilename.addSelectionListener(new SelectionAdapter() {
@@ -928,9 +935,9 @@ public class WekaScoringDialog extends BaseStepDialog
 
     if (m_currentMeta.getUpdateIncrementalModel()) {
       if (!Const.isEmpty(m_wSaveFilename.getText())) {
-          String modSaveFname = transMeta.
-            environmentSubstitute(m_wSaveFilename.getText());
-          m_currentMeta.setSavedModelFileName(modSaveFname);
+        /*          String modSaveFname = transMeta.
+                    environmentSubstitute(m_wSaveFilename.getText()); */
+        m_currentMeta.setSavedModelFileName(m_wSaveFilename.getText());
       } else {
         // make sure that save filename is empty
         m_currentMeta.setSavedModelFileName("");

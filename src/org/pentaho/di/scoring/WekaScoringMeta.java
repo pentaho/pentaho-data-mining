@@ -306,9 +306,11 @@ public class WekaScoringMeta
         //        System.err.println("Problem serializing model to base64 (Meta.getXML())");
       }
     } else {
-      m_log.logBasic("[WekaScoringMeta]", 
-                     Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
-                     + " " + m_modelFileName);
+      if (!Const.isEmpty(m_modelFileName)) {
+        m_log.logBasic("[WekaScoringMeta]", 
+                       Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
+                       + " " + m_modelFileName);
+      }
       /*      System.err.println("Model will be sourced from file "
               + m_modelFileName); */
       // save the model file name
@@ -606,9 +608,11 @@ public class WekaScoringMeta
     } else {
       // either XStream is not present or user wants to source from
       // file
-      m_log.logBasic("[WekaScoringMeta]",
-                     Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
-                     + " " + m_modelFileName);
+      if (!Const.isEmpty(m_modelFileName)) {
+        m_log.logBasic("[WekaScoringMeta]",
+                       Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
+                       + " " + m_modelFileName);
+      }
       /*      System.err.println("Model will be sourced from file "
               + m_modelFileName); */
       rep.saveStepAttribute(id_transformation, 
