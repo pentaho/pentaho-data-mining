@@ -104,6 +104,7 @@ public class WekaScoringData extends BaseStepData
 
     Object model = null;
     Instances header = null;
+    int[] ignoredAttsForClustering = null;
     if (!modelFile.getName().toLowerCase().endsWith(".xstreammodel")) {
       InputStream is = new FileInputStream(modelFile);
       if (modelFile.getName().toLowerCase().endsWith(".gz")) {
@@ -116,6 +117,15 @@ public class WekaScoringData extends BaseStepData
 
       // try and grab the header
       header = (Instances)oi.readObject();
+
+      if (model instanceof weka.clusterers.Clusterer) {
+        // try and grab any attributes to be ignored during clustering
+        try {
+          ignoredAttsForClustering = (int[]) oi.readObject();
+        } catch (Exception ex) {
+          // Don't moan if there aren't any :-)
+        }
+      }
       oi.close();
       //      System.err.println(header);
     } else {
@@ -139,6 +149,10 @@ public class WekaScoringData extends BaseStepData
 
     WekaScoringModel wsm = WekaScoringModel.createScorer(model);
     wsm.setHeader(header);
+    if (wsm instanceof WekaScoringClusterer &&
+        ignoredAttsForClustering != null) {
+      ((WekaScoringClusterer)wsm).setAttributesToIgnore(ignoredAttsForClustering);
+    }
     return wsm;
   }
 

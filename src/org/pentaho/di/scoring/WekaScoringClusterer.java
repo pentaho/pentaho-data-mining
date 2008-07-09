@@ -23,9 +23,11 @@
 package org.pentaho.di.scoring;
 
 import weka.core.Instance;
+import weka.core.Instances;
 import weka.clusterers.Clusterer;
 import weka.clusterers.UpdateableClusterer;
 import weka.clusterers.DensityBasedClusterer;
+import weka.filters.unsupervised.attribute.Remove;
 
 /**
  * Subclass of WekaScoringModel that encapsulates a Clusterer.
@@ -37,6 +39,11 @@ class WekaScoringClusterer extends WekaScoringModel {
   
   // The encapsulated clusterer
   private Clusterer m_model;
+
+  // Any attributes to ignore
+  private Remove m_ignoredAtts;
+
+  private String m_ignoredString;
   
   /**
    * Creates a new <code>WekaScoringClusterer</code> instance.
@@ -45,6 +52,29 @@ class WekaScoringClusterer extends WekaScoringModel {
    */
   public WekaScoringClusterer(Object model) {
     super(model);
+  }
+
+  /**
+   * Sets up a Remove filter to remove attributes that
+   * are to be ignored by the clusterer. setHeader must
+   * be called before this method.
+   *
+   * @param attsToIgnore any attributes to ignore during the scoring process
+   */
+  public void setAttributesToIgnore(int[] attsToIgnore) throws Exception {
+    Instances headerI = getHeader();
+    m_ignoredAtts = new Remove();
+    m_ignoredAtts.setAttributeIndicesArray(attsToIgnore);
+    m_ignoredAtts.setInvertSelection(false);
+    m_ignoredAtts.setInputFormat(headerI);
+
+    StringBuffer temp = new StringBuffer();
+    temp.append("Attributes ignored by clusterer:\n\n");
+    for (int i = 0; i < attsToIgnore.length; i++) {
+      temp.append(headerI.attribute(attsToIgnore[i]).name() + "\n");
+    }
+    temp.append("\n\n");
+    m_ignoredString = temp.toString();
   }
   
   /**
@@ -74,6 +104,9 @@ class WekaScoringClusterer extends WekaScoringModel {
    * @exception Exception if an error occurs
    */
   public double classifyInstance(Instance inst) throws Exception {
+    if (m_ignoredAtts != null) {
+      inst = applyFilter(inst);
+    }
     return (double)m_model.clusterInstance(inst);
   }
 
@@ -87,6 +120,9 @@ class WekaScoringClusterer extends WekaScoringModel {
   public boolean update(Instance inst) throws Exception {
     // Only cobweb is updateable at present
     if (isUpdateableModel()) {
+      if (m_ignoredAtts != null) {
+        inst = applyFilter(inst);
+      }
       //      System.err.println("In update...");
       ((UpdateableClusterer)m_model).updateClusterer(inst);
       //      System.err.println(m_model);
@@ -104,7 +140,20 @@ class WekaScoringClusterer extends WekaScoringModel {
    */  
   public double[] distributionForInstance(Instance inst)
     throws Exception {
+    if (m_ignoredAtts != null) {
+      inst = applyFilter(inst);
+    }
     return m_model.distributionForInstance(inst);
+  }
+
+  private Instance applyFilter(Instance inputInstance) throws Exception {
+    if (!m_ignoredAtts.input(inputInstance)) {
+      throw new Exception("[WekaScoring] Filter didn't make the test instance"
+                          + " immediately available!");
+    }
+    m_ignoredAtts.batchFinished();
+    Instance newInstance = m_ignoredAtts.output();
+    return newInstance;
   }
 
   /**
@@ -160,6 +209,10 @@ class WekaScoringClusterer extends WekaScoringModel {
    * @return the Clusterer's model as a String
    */
   public String toString() {
-    return m_model.toString();
+    String ignored = (m_ignoredString == null)
+      ? ""
+      : m_ignoredString;
+
+    return ignored + m_model.toString();
   }
 }
