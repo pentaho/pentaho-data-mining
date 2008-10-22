@@ -341,6 +341,21 @@ public class ArffOutputData extends BaseStepData
       return convertStringToBinaryString(encoding, Const.
                                          trimToType(temp, 
                                                     v.getTrimType()));
+    } else if (m_arffMeta[index].
+        getKettleType() == ValueMetaInterface.TYPE_BOOLEAN) {
+      // isNull bug workaround
+      String temp = v.getString(value);
+      if (temp == null || temp.length() == 0) {
+        return m_missing;
+      }
+
+      if (v.getBoolean(value)) {
+        temp = "1";
+      } else {
+        temp = "0";
+      }
+      return convertStringToBinaryString(encoding, 
+          Const.trimToType(temp, v.getTrimType()));
     } else {
       // isNull bug workaround
       String temp = v.getString(value);
