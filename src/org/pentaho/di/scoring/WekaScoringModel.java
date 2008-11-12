@@ -28,6 +28,7 @@ import weka.core.Instances;
 import weka.core.Instance;
 import weka.classifiers.Classifier;
 import weka.clusterers.Clusterer;
+import weka.core.pmml.PMMLModel;
 
 /**
  * Abstract wrapper class for a Weka model. Provides a
@@ -49,6 +50,10 @@ public abstract class WekaScoringModel implements Serializable {
    * @param model the actual Weka model to enacpsulate
    */
   public WekaScoringModel(Object model) {
+    if (model instanceof PMMLModel) {
+      LogAdapter logger = new LogAdapter();
+      ((PMMLModel)model).setLog(logger);
+    }
     setModel(model);
   }
 
@@ -69,6 +74,14 @@ public abstract class WekaScoringModel implements Serializable {
    */
   public Instances getHeader() {
     return m_header;
+  }
+
+  /**
+   * Tell the model that this scoring run is finished.
+   */
+  public void done() {
+    // subclasses override if they need to do
+    // something here.
   }
 
   /**

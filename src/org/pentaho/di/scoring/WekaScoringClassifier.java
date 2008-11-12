@@ -24,6 +24,7 @@ package org.pentaho.di.scoring;
 
 import weka.core.Instance;
 import weka.classifiers.Classifier;
+import weka.classifiers.pmml.consumer.PMMLClassifier;
 import weka.classifiers.UpdateableClassifier;
 
 /**
@@ -127,6 +128,16 @@ class WekaScoringClassifier extends WekaScoringModel {
     }
     
     return false;
+  }
+
+  /**
+   * If the model is a PMMLClassifier, tell it that
+   * the scoring run has finished. 
+   */
+  public void done() {
+    if (m_model instanceof PMMLClassifier) {
+      ((PMMLClassifier)m_model).done();
+    }
   }
 
   /**

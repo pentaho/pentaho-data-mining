@@ -132,6 +132,8 @@ public class WekaScoring extends BaseStep
         }
       }
 
+      m_meta.getModel().done();
+
       setOutputDone();
       return false;
     }

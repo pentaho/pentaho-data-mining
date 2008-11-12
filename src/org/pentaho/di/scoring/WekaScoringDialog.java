@@ -570,25 +570,31 @@ public class WekaScoringDialog extends BaseStepDialog
            String[] extensions = null;
            String[] filterNames = null;
            if (XStream.isPresent()) {
-             extensions = new String[3];
-             filterNames = new String[3];
+             extensions = new String[4];
+             filterNames = new String[4];
              extensions[0] = "*.model";
              filterNames[0] = 
                Messages.getString("WekaScoringDialog.FileType.ModelFileBinary");
              extensions[1] = "*.xstreammodel";
              filterNames[1] = 
                Messages.getString("WekaScoringDialog.FileType.ModelFileXML");
-             extensions[2] = "*";
+             extensions[2] = "*.xml";
              filterNames[2] = 
+               Messages.getString("WekaScoringDialog.FileType.ModelFilePMML");
+             extensions[3] = "*";
+             filterNames[3] = 
                Messages.getString("System.FileType.AllFiles");
            } else {
-             extensions = new String[2];
-             filterNames = new String[2];
+             extensions = new String[3];
+             filterNames = new String[3];
              extensions[0] = "*.model";
              filterNames[0] = 
                Messages.getString("WekaScoringDialog.FileType.ModelFileBinary");
-             extensions[1] = "*";
+             extensions[1] = "*.xml";
              filterNames[1] = 
+               Messages.getString("WekaScoringDialog.FileType.ModelFilePMML");
+             extensions[2] = "*";
+             filterNames[2] = 
                Messages.getString("System.FileType.AllFiles");
            }
            dialog.setFilterExtensions(extensions);

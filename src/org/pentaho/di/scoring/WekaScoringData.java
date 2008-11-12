@@ -22,8 +22,6 @@
 
 package org.pentaho.di.scoring;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.io.*;
 import java.util.zip.GZIPInputStream;
@@ -43,6 +41,8 @@ import weka.core.Instances;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Utils;
+import weka.core.pmml.PMMLFactory;
+import weka.core.pmml.PMMLModel;
 import weka.core.xml.XStream;
 import weka.classifiers.Classifier;
 
@@ -94,10 +94,12 @@ public class WekaScoringData extends BaseStepData
   }
 
   /**
-   * Loads a serialized model.
+   * Loads a serialized model. Models can either be binary serialized
+   * Java objects, objects deep-serialized to xml, or PMML. 
    *
    * @param modelFile a <code>File</code> value
    * @return the model
+   * @throws Exception if there is a problem laoding the model.
    */
   public static WekaScoringModel loadSerializedModel(File modelFile) 
     throws Exception {
@@ -105,7 +107,31 @@ public class WekaScoringData extends BaseStepData
     Object model = null;
     Instances header = null;
     int[] ignoredAttsForClustering = null;
-    if (!modelFile.getName().toLowerCase().endsWith(".xstreammodel")) {
+    
+    if (modelFile.getName().toLowerCase().endsWith(".xml")) {
+      // assume it is PMML
+      model = PMMLFactory.getPMMLModel(modelFile, null);
+      
+      // we will use the mining schema as the instance structure
+      header = ((PMMLModel)model).getMiningSchema().getMiningSchemaAsInstances();
+    } else if (modelFile.getName().toLowerCase().endsWith(".xstreammodel")) {
+      LogWriter.getInstance().logBasic("[WekaScoringData]",
+                     Messages.getString("WekaScoringData.Log.LoadXMLModel"));
+      //      System.err.println("Trying to load XML model...");
+      if (XStream.isPresent()) {
+        Vector v = (Vector) XStream.read(modelFile.getAbsolutePath());
+        //        System.err.println("Got vector...");
+        model = v.elementAt(0);
+        if (v.size() == 2) {
+          // try and grab the header
+          header = (Instances) v.elementAt(1);
+          //          System.err.println("Got header...");
+        }
+      } else {
+        throw new Exception("Can't load XML model because XStream is not "
+                            + "in the classpath!");
+      }
+    } else {
       InputStream is = new FileInputStream(modelFile);
       if (modelFile.getName().toLowerCase().endsWith(".gz")) {
         is = new GZIPInputStream(is);      
@@ -128,23 +154,6 @@ public class WekaScoringData extends BaseStepData
       }
       oi.close();
       //      System.err.println(header);
-    } else {
-      LogWriter.getInstance().logBasic("[WekaScoringData]",
-                     Messages.getString("WekaScoringData.Log.LoadXMLModel"));
-      //      System.err.println("Trying to load XML model...");
-      if (XStream.isPresent()) {
-        Vector v = (Vector) XStream.read(modelFile.getAbsolutePath());
-        //        System.err.println("Got vector...");
-        model = v.elementAt(0);
-        if (v.size() == 2) {
-          // try and grab the header
-          header = (Instances) v.elementAt(1);
-          //          System.err.println("Got header...");
-        }
-      } else {
-        throw new Exception("Can't load XML model because XStream is not "
-                            + "in the classpath!");
-      }
     }
 
     WekaScoringModel wsm = WekaScoringModel.createScorer(model);
