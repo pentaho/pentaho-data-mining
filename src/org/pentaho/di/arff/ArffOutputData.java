@@ -318,14 +318,17 @@ public class ArffOutputData extends BaseStepData
         ? (String)value
         : v.getString(value);
 
-      // enclose in quotes if necessary
-      svalue = Utils.quote(svalue);
-
       // check to see if we've seen this value before, if not
-      // then update the hash tree
+      // then update the hash tree. Note that we enclose in
+      // quotes (if necessary) *after* inserting into the
+      // hash table so that the header values are kept in
+      // sorted order in the situation when there are 
+      // a mixture of values that need quoting and those
+      // that do not.
       if (!m_nominalVals[index].containsKey(svalue)) {
         m_nominalVals[index].put(svalue, svalue);
       }
+      svalue = Utils.quote(svalue);
       //      return svalue.getBytes();
       return convertStringToBinaryString(encoding, Const.
                                          trimToType(svalue, 
@@ -337,6 +340,7 @@ public class ArffOutputData extends BaseStepData
       if (temp == null || temp.length() == 0) {
         return m_missing;
       }
+      
       temp = Utils.quote(temp);
       return convertStringToBinaryString(encoding, Const.
                                          trimToType(temp, 
@@ -618,11 +622,12 @@ public class ArffOutputData extends BaseStepData
     // get keys from corresponding hash tree
     Set<String> keySet = m_nominalVals[index].keySet();
     Iterator<String> ksi = keySet.iterator();
+    
     byte[] nomVal = null;
     while (ksi.hasNext()) {
       String next = ksi.next();
-      // value was quoted when added into hash table.
-      //      next = Utils.quote(next);
+
+      next = Utils.quote(next);
       if (m_hasEncoding && encoding != null) {
         if (Const.isEmpty(encoding)) {
           nomVal = next.getBytes();
