@@ -644,6 +644,36 @@ public class WekaScoringMeta
                         VariableSpace space) 
     throws KettleStepException {
     
+    if (m_model == null && !Const.isEmpty(getSerializedModelFileName())) {
+      // see if we can load from a file.
+      
+      String modName = getSerializedModelFileName();
+      modName = space.environmentSubstitute(modName);
+      File modelFile = null;
+      if (modName.startsWith("file:")) {
+        try {
+          modelFile = 
+            new File(new java.net.URI(modName));
+        } catch (Exception ex) {
+          throw new KettleStepException("Malformed URI for model file");
+        }
+      } else {
+        modelFile = new File(modName);
+      }  
+      if (!modelFile.exists()) {
+        throw new KettleStepException("Serialized model file does "
+                                  + "not exist on disk!");
+      }
+      
+      try {
+        WekaScoringModel model = 
+          WekaScoringData.loadSerializedModel(modelFile);
+        setModel(model);
+      } catch (Exception ex) {
+        throw new KettleStepException("Problem de-serializing model file");
+      }
+    }
+    
     if (m_model != null) {
       Instances header = m_model.getHeader();
       String classAttName = null;
