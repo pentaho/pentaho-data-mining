@@ -116,6 +116,7 @@ public class WekaScoring extends BaseStep
             File updatedModelFile = null;
             if (modName.startsWith("file:")) {
               try {
+                modName = modName.replace(" ", "%20");
                 updatedModelFile = 
                   new File(new java.net.URI(modName));
               } catch (Exception ex) {
@@ -159,6 +160,7 @@ public class WekaScoring extends BaseStep
         File modelFile = null;
         if (modName.startsWith("file:")) {
           try {
+            modName = modName.replace(" ", "%20");
             modelFile = 
               new File(new java.net.URI(modName));
           } catch (Exception ex) {

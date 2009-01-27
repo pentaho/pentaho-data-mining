@@ -712,6 +712,7 @@ public class WekaScoringDialog extends BaseStepDialog
     File modelFile = null;
     if (modName.startsWith("file:")) {
       try {
+        modName = modName.replace(" ", "%20");
         modelFile = new File(new java.net.URI(modName));
     } catch (Exception ex) {
         //      System.err.println("Malformed URI");
