@@ -184,6 +184,7 @@ public class ArffOutputData extends BaseStepData
   public void openFiles(String filename) throws IOException {
     if (filename.startsWith("file:")) {
       try {
+        filename.replace(" ", "%20");
         m_headerFile = new File(new java.net.URI(filename));
       } catch (Exception ex) {
         throw new IOException("Malformed URI for arff file");
