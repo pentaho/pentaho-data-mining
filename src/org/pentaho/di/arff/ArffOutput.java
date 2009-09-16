@@ -147,6 +147,29 @@ public class ArffOutput extends BaseStep
           outputFieldIndexes[i] = -1;
         }
       }
+      
+      // check the weight field (if set)
+      if (!Const.isEmpty(m_meta.getWeightFieldName())) {
+        int weightFieldIndex = 
+          getInputRowMeta().indexOfValue(m_meta.getWeightFieldName());
+        
+        // check to see if its still in the incoming stream
+        if (weightFieldIndex < 0) {
+          throw new KettleException("Field for setting instance weights [" 
+              + m_meta.getWeightFieldName()
+              + "] couldn't be found in the "
+              +"input stream!");
+        }
+        
+        // now check the type (can only use numbers to set weights!)
+        ValueMetaInterface v = getInputRowMeta().getValueMeta(weightFieldIndex);
+        if (!v.isNumeric()) {
+          throw new KettleException("Field for setting instance weights must be numeric!");
+        }
+        
+        m_data.setWeightFieldIndex(weightFieldIndex);
+      }
+      
       m_data.setOutputFieldIndexes(outputFieldIndexes, arffMeta);
       
       if (Const.isEmpty(m_meta.getFileName())) {
@@ -158,7 +181,11 @@ public class ArffOutput extends BaseStep
       }
 
       try {
-        String modName = m_transMeta.environmentSubstitute(m_meta.getFileName());        
+        String fileName = m_meta.getFileName();
+        if (!(fileName.endsWith(".arff") || fileName.endsWith(".ARFF"))) {
+          fileName = fileName + ".arff";
+        }
+        String modName = m_transMeta.environmentSubstitute(fileName);        
         m_data.openFiles(modName);
       } catch (IOException ex) {
         throw new KettleException("Unable to open file(s)...", ex);

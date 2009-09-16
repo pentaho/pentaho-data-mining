@@ -78,6 +78,9 @@ public class ArffOutputMeta
 
   // Relation name line for the ARFF file
   protected String m_relationName;
+  
+  /** The anme of the field to use to set the weights. Null indicates no weight setting (i.e. equal weights) */
+  protected String m_weightField;
 
   /**
    * Creates a new <code>ArffOutputMeta</code> instance.
@@ -96,6 +99,24 @@ public class ArffOutputMeta
    */
   public void allocate(int num) {
     m_outputFields = new ArffMeta[num];
+  }
+  
+  /**
+   * Set the name of the field to use to set instance weights from.
+   * 
+   * @param wfn the name of the field to use to set instance weights or null for equal weights.
+   */
+  public void setWeightFieldName(String wfn) {
+    m_weightField = wfn;
+  }
+  
+  /**
+   * Gets the name of the field to use to set instance weights.
+   * 
+   * @return the name of the field to use or null if all instances are to receive equal weights
+   */
+  public String getWeightFieldName() {
+    return m_weightField;
   }
 
   /**
@@ -247,6 +268,10 @@ public class ArffOutputMeta
                                            m_fileFormat));
       retval.append(XMLHandler.addTagValue("encoding",
                                            m_encoding));
+      
+      if (!Const.isEmpty(m_weightField)) {
+        retval.append(XMLHandler.addTagValue("weight_field", m_weightField));
+      }
 
       retval.append("    <arff>" + Const.CR);
       if (m_outputFields != null) {
@@ -279,6 +304,7 @@ public class ArffOutputMeta
     m_relationName = XMLHandler.getTagValue(stepnode, "relation_name");
     m_fileFormat = XMLHandler.getTagValue(stepnode, "file_format");
     m_encoding = XMLHandler.getTagValue(stepnode, "encoding");
+    m_weightField = XMLHandler.getTagValue(stepnode, "weight_field");
     
     m_newLine = getNewLine();
 
@@ -314,6 +340,8 @@ public class ArffOutputMeta
       rep.getStepAttributeString(id_step, 0, "file_format");
     m_encoding = 
       rep.getStepAttributeString(id_step, 0, "encoding");
+    m_weightField =
+      rep.getStepAttributeString(id_step, 0, "weight_field");
 
     m_newLine = getNewLine();
 
@@ -355,7 +383,10 @@ public class ArffOutputMeta
                             id_step, 0, 
                             "encoding",
                             m_encoding);
-      
+      if (!Const.isEmpty(m_weightField)) {
+        rep.saveStepAttribute(id_transformation,
+            id_step, 0, "weight_field", m_weightField);
+      }
     }
     
     if (m_outputFields != null) {
@@ -497,6 +528,7 @@ public class ArffOutputMeta
     m_fileFormat = "DOS";
     m_fileName = "file";
     m_relationName = "NewRelation";
+    m_weightField = null;
     m_newLine = getNewLine();
   }
 

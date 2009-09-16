@@ -18,6 +18,8 @@
 	  <property name="libext"     			location="libext"/>
 	  <property name="libswt"     			location="libswt"/>
 	  <property name="deploydir"     		location="ArffOutputDeploy"/>
+          <property name="java_version" value="1.5"/>
+          <property name="debug" value="true"/>
 	
 	  <target name="init" description="create timestamp and directories">
     	<echo>Init...</echo>
@@ -37,7 +39,10 @@
 	  <target name="compile" depends="init" description="compile the source " >
 	  	<echo>Compiling ArffOutputPlugin Plugin...</echo>
 	    <javac srcdir="${src}" 
-	    	   destdir="${classes}">
+	    	   destdir="${classes}"
+                   source="${java_version}"
+                   target="${java_version}"
+                   debug="${debug}">
 
 	    	<classpath id="cpath">
 				<fileset dir="${libext}" 		includes="*.jar"/>

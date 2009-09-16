@@ -60,6 +60,9 @@ public class ArffOutputData extends BaseStepData
 
   // indexes of fields being output
   protected int[] m_outputFieldIndexes;
+  
+  /** Index of the field used to set the weight for each instance (-1 means equal weights) */
+  protected int m_weightFieldIndex = -1;
 
   // meta data for the ARFF fields
   protected ArffMeta[] m_arffMeta;
@@ -75,6 +78,8 @@ public class ArffOutputData extends BaseStepData
   protected byte[] m_separator = ",".getBytes();
   protected byte[] m_newLine = "\n".getBytes();
   protected byte[] m_missing = "?".getBytes();
+  protected byte[] m_leftCurly = "{".getBytes();
+  protected byte[] m_rightCurly = "}".getBytes();
 
   // Is there a specific character encoding being used?
   protected boolean m_hasEncoding;
@@ -174,6 +179,16 @@ public class ArffOutputData extends BaseStepData
       }
     }
   }
+  
+  /**
+   * Set the index of the field whose values will be used to set the weight
+   * for each instance.
+   * 
+   * @param index the index of the field to use to set instance-level weights.
+   */
+  public void setWeightFieldIndex(int index) {
+    m_weightFieldIndex = index;
+  }
 
   /**
    * Open files ready to write to
@@ -255,7 +270,39 @@ public class ArffOutputData extends BaseStepData
         writeField(i, r[m_outputFieldIndexes[i]], encoding);
       }
     }
+    
+    // write the weight value (if necessary)
+    if (m_weightFieldIndex != -1) {
+      writeWeight(m_weightFieldIndex, r[m_weightFieldIndex], encoding);
+    }
+    
     m_dataOut.write(m_newLine);
+  }
+  
+  private void writeWeight(int index, Object value, String encoding)
+    throws KettleStepException {
+    try {
+      ValueMetaInterface v = 
+        m_outputRowMeta.getValueMeta(index);
+      
+      // write it as long as it's not null!!
+      String temp = v.getString(value);
+      
+      if (temp != null && temp.length() > 0) {
+        m_dataOut.write(m_separator);
+        m_dataOut.write(m_leftCurly);
+        //writeField(index, value, encoding);
+        byte[] str;
+        
+        str = v.getBinaryString(value);
+        m_dataOut.write(str);
+        
+        m_dataOut.write(m_rightCurly);
+      }
+    } catch (Exception ex) {
+      throw new KettleStepException("Problem writing weight field content "
+          + "to file", ex);
+    }
   }
 
   /**

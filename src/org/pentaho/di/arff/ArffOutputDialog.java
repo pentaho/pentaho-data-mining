@@ -79,7 +79,7 @@ import java.io.File;
 /**
  * The UI class for the ArffOutput step
  *
- * @author Mark Hall (mhall{[at]}pentaho.org
+ * @author Mark Hall (mhall{[at]}pentaho.org)
  * @version 1.0
  */
 public class ArffOutputDialog extends BaseStepDialog
@@ -137,6 +137,12 @@ public class ArffOutputDialog extends BaseStepDialog
   private FormData m_fdFields;
 
   private ColumnInfo[] m_colinf;
+  
+  // weight field stuff
+  private Label m_weightFieldCheckBoxLab;
+  private Button m_weightFieldCheckBox;
+  private Label m_weightFieldLab;
+  private CCombo m_weightFieldComboBox;
 
   private boolean m_gotEncodings = false;
 
@@ -432,14 +438,19 @@ public class ArffOutputDialog extends BaseStepDialog
     m_fdFields.left = new FormAttachment(0, 0);
     m_fdFields.top = new FormAttachment(m_wlFields, margin);
     m_fdFields.right = new FormAttachment(100, 0);
-    m_fdFields.bottom = new FormAttachment(100, -50);
+    m_fdFields.bottom = new FormAttachment(100, -100);
     m_wFields.setLayoutData(m_fdFields);
 
     wGet = new Button(wFieldsComp, SWT.PUSH);
     wGet.setText(Messages.getString("System.Button.GetFields"));
     wGet.setToolTipText(Messages.getString("System.Tooltip.GetFields"));
 
-    setButtonPositions(new Button[] { wGet }, margin, null);
+    // setButtonPositions(new Button[] { wGet }, margin, null);
+    FormData temp = new FormData();
+    temp.left = new FormAttachment(0, 0);
+    temp.right = new FormAttachment(middle, -margin);
+    temp.top = new FormAttachment(m_wFields, margin);
+    wGet.setLayoutData(temp);
 
     lsGet = new Listener() {
         public void handleEvent(Event e) {
@@ -448,6 +459,52 @@ public class ArffOutputDialog extends BaseStepDialog
         }
       };
     wGet.addListener(SWT.Selection, lsGet);
+    
+    m_weightFieldCheckBoxLab = new Label(wFieldsComp, SWT.RIGHT);
+    m_weightFieldCheckBoxLab.setText("Set instance weights from field");
+    props.setLook(m_weightFieldCheckBoxLab);
+    FormData fdlWeightFieldCheckBoxLab = new FormData();
+    fdlWeightFieldCheckBoxLab.left = new FormAttachment(0, 0);
+    fdlWeightFieldCheckBoxLab.right = new FormAttachment(middle, -margin);
+    fdlWeightFieldCheckBoxLab.top = new FormAttachment(wGet, margin);
+    m_weightFieldCheckBoxLab.setLayoutData(fdlWeightFieldCheckBoxLab);
+    
+    m_weightFieldCheckBox = new Button(wFieldsComp, SWT.CHECK);
+    props.setLook(m_weightFieldCheckBox);
+    FormData fdlWeightFieldCheckBox = new FormData();
+    fdlWeightFieldCheckBox.left = new FormAttachment(middle, 0);
+    fdlWeightFieldCheckBox.right = new FormAttachment(100, 0);
+    fdlWeightFieldCheckBox.top = new FormAttachment(wGet, margin);
+    m_weightFieldCheckBox.setLayoutData(fdlWeightFieldCheckBox);
+    
+    m_weightFieldLab = new Label(wFieldsComp, SWT.RIGHT);
+    m_weightFieldLab.setText("Weight field");
+    props.setLook(m_weightFieldLab);
+    FormData fdlWeightFieldLab = new FormData();
+    fdlWeightFieldLab.left = new FormAttachment(0, 0);
+    fdlWeightFieldLab.right = new FormAttachment(middle, -margin);
+    fdlWeightFieldLab.top = new FormAttachment(m_weightFieldCheckBox, margin);
+    m_weightFieldLab.setLayoutData(fdlWeightFieldLab);
+    
+    m_weightFieldComboBox = new CCombo(wFieldsComp, SWT.BORDER | SWT.READ_ONLY);
+    m_weightFieldComboBox.setToolTipText("Set instance-level weights using this incoming field");
+    props.setLook(m_weightFieldComboBox);
+    FormData fdlWeightFieldComboBox = new FormData();
+    fdlWeightFieldComboBox.left = new FormAttachment(middle, 0);
+    fdlWeightFieldComboBox.right = new FormAttachment(100, 0);
+    fdlWeightFieldComboBox.top = new FormAttachment(m_weightFieldCheckBox, margin);
+    m_weightFieldComboBox.setLayoutData(fdlWeightFieldComboBox);
+    m_weightFieldComboBox.setEnabled(false);
+    
+    m_weightFieldCheckBox.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        if (m_weightFieldCheckBox.getSelection()) {
+          setupWeightFieldComboBox();
+        }
+        m_weightFieldComboBox.setEnabled(m_weightFieldCheckBox.getSelection());
+      }
+    });
+    
 
     m_fdFieldsComp = new FormData();
     m_fdFieldsComp.left = new FormAttachment(0, 0);
@@ -457,8 +514,6 @@ public class ArffOutputDialog extends BaseStepDialog
     wFieldsComp.setLayoutData(m_fdFieldsComp);    
     wFieldsComp.layout();
     m_wFieldsTab.setControl(wFieldsComp); 
-
-
 
     m_fdTabFolder = new FormData();
     m_fdTabFolder.left  = new FormAttachment(0, 0);
@@ -637,6 +692,14 @@ public class ArffOutputDialog extends BaseStepDialog
       m_wFields.removeEmptyRows();
       m_wFields.setRowNums();
       m_wFields.optWidth(true);
+      
+      // weight field specified?
+      if (!Const.isEmpty(m_currentMeta.getWeightFieldName())) {
+        m_weightFieldCheckBox.setSelection(true);
+        setupWeightFieldComboBox();
+        m_weightFieldComboBox.setEnabled(true);
+        m_weightFieldComboBox.setText(m_currentMeta.getWeightFieldName());
+      }
     }
   }
 
@@ -662,6 +725,31 @@ public class ArffOutputDialog extends BaseStepDialog
       }
     }
     return null;
+  }
+  
+  private void setupWeightFieldComboBox() {
+ // try and set up from incoming fields from previous step
+    StepMeta stepMeta = transMeta.findStep(stepname);
+    
+    if (stepMeta != null) {
+      try {
+        RowMetaInterface rmi = transMeta.getPrevStepFields(stepMeta);
+        m_weightFieldComboBox.removeAll();
+        for (int i = 0; i < rmi.size(); i++) {
+          ValueMetaInterface inField = rmi.getValueMeta(i);
+          int fieldType = inField.getType();
+          switch(fieldType) {
+          case ValueMetaInterface.TYPE_NUMBER:
+          case ValueMetaInterface.TYPE_INTEGER:
+            m_weightFieldComboBox.add(inField.getName());
+            break;
+          }
+        }
+      } catch (KettleException ex) {
+        log.logError(toString(), Messages.
+            getString("ArffOutputDialog.Log.UnableToFindInput"));
+      }
+    }
   }
 
   /**
@@ -812,6 +900,14 @@ public class ArffOutputDialog extends BaseStepDialog
 
       m_currentMeta.getOutputFields()[i] = 
         new ArffMeta(fieldName, kettleType, arffType);
+    }
+    
+    // weight field set?
+    if (m_weightFieldCheckBox.getSelection() && 
+        !Const.isEmpty(m_weightFieldComboBox.getText())) {
+      m_currentMeta.setWeightFieldName(m_weightFieldComboBox.getText());
+    } else {
+      m_currentMeta.setWeightFieldName(null);
     }
 
     if (!m_originalMeta.equals(m_currentMeta)) {
