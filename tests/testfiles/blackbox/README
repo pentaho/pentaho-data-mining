@@ -1,0 +1,10 @@
+Here are some test files that can be used to test the weka
+scoring step using Kettle's blackbox testing framework. Copy the
+files in this directory (not including this README) to:
+
+<path to Kettle working copy>/Kettle/trunk/testfiles/blackbox/tests/trans/steps/wekaScoring
+
+Run with:
+
+ant tests-core
+
