@@ -40,6 +40,7 @@ import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.xml.XMLHandler;
+import org.pentaho.di.repository.ObjectId;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
@@ -327,7 +328,7 @@ public class ArffOutputMeta
    * @exception KettleException if an error occurs
    */
   public void readRep(Repository rep, 
-                      long id_step, 
+                      ObjectId id_step, 
                       List<DatabaseMeta> databases, 
                       Map<String, Counter> counters) 
     throws KettleException {
@@ -362,8 +363,8 @@ public class ArffOutputMeta
    * @exception KettleException if an error occurs
    */
   public void saveRep(Repository rep, 
-                      long id_transformation, 
-                      long id_step)
+                      ObjectId id_transformation, 
+                      ObjectId id_step)
     throws KettleException {
     
     if (m_fileName != null) {

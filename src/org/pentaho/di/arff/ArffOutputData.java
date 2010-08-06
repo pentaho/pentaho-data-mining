@@ -319,7 +319,7 @@ public class ArffOutputData extends BaseStepData
     try {
       ValueMetaInterface v = 
         m_outputRowMeta.getValueMeta(m_outputFieldIndexes[index]);
-      
+
       byte[] str;
       
       str = formatField(index, v, value, encoding);

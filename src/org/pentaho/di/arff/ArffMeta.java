@@ -26,6 +26,7 @@ import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.xml.XMLHandler;
+import org.pentaho.di.repository.ObjectId;
 import org.pentaho.di.repository.Repository;
 
 import org.w3c.dom.Node;
@@ -81,7 +82,7 @@ public class ArffMeta implements Cloneable {
    * @exception KettleException if an error occurs
    */
   public ArffMeta(Repository rep,
-                  long id_step,
+                  ObjectId id_step,
                   int nr) throws KettleException {
     m_fieldName = 
       rep.getStepAttributeString(id_step, nr, "field_name");
@@ -184,8 +185,8 @@ public class ArffMeta implements Cloneable {
    * @param nr the step number
    * @exception KettleException if an error occurs
    */
-  public void saveRep(Repository rep, long id_transformation, 
-                      long id_step,
+  public void saveRep(Repository rep, ObjectId id_transformation, 
+                      ObjectId id_step,
                       int nr) throws KettleException {
 
     rep.saveStepAttribute(id_transformation, id_step, nr, 
