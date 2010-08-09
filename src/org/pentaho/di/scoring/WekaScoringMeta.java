@@ -41,7 +41,9 @@ import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.xml.XMLHandler;
+import org.pentaho.di.repository.ObjectId;
 import org.pentaho.di.repository.Repository;
+import org.pentaho.di.repository.kdr.KettleDatabaseRepository;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
@@ -50,6 +52,7 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.logging.LogWriter;
 import org.w3c.dom.Node;
 
@@ -67,6 +70,16 @@ public class WekaScoringMeta
   implements StepMetaInterface {
 
   public static final String XML_TAG = "weka_scoring";
+  
+  // Use a model file specified in an incoming field
+  private boolean m_fileNameFromField;
+  
+  // Whether to cache loaded models in memory (when they are being specified
+  // by a field in the incoming rows
+  private boolean m_cacheLoadedModels;
+  
+  // The name of the field that is being used to specify model file name/path
+  private String m_fieldNameToLoadModelFrom;
   
   // File name of the serialized Weka model to load/import
   private String m_modelFileName;
@@ -88,19 +101,48 @@ public class WekaScoringMeta
   // Holds the actual Weka model (classifier or clusterer)
   private WekaScoringModel m_model;
 
+  // holds a default model - used only when model files are sourced
+  // from a field in the incoming data rows. In this case, it is
+  // the fallback model if there is no model file specified in the
+  // current incoming row. Is also necessary so that getFields()
+  // can determine the full output structure.
+  private WekaScoringModel m_defaultModel;
+
   // used to map attribute indices to incoming field indices
   private int[] m_mappingIndexes;
 
   // logging
-  protected LogWriter m_log;
+  //protected LogChannelInterface m_log;
 
   /**
    * Creates a new <code>WekaScoringMeta</code> instance.
    */
   public WekaScoringMeta() {
     super(); // allocate BaseStepMeta
-
-    m_log = LogWriter.getInstance();
+  }
+    
+  public void setFileNameFromField(boolean f) {
+    m_fileNameFromField = f;
+  }
+  
+  public boolean getFileNameFromField() {
+    return m_fileNameFromField;
+  }
+  
+  public void setCacheLoadedModels(boolean l) {
+    m_cacheLoadedModels = l;
+  }
+  
+  public boolean getCacheLoadedModels() {
+    return m_cacheLoadedModels;
+  }
+  
+  public void setFieldNameToLoadModelFrom(String fn) {
+    m_fieldNameToLoadModelFrom = fn;
+  }
+  
+  public String getFieldNameToLoadModelFrom() {
+    return m_fieldNameToLoadModelFrom;
   }
 
   /**
@@ -161,6 +203,27 @@ public class WekaScoringMeta
    */
   public WekaScoringModel getModel() {
     return m_model;
+  }
+  
+  /**
+   * Gets the default model (only used when model file names
+   * are being sourced from a field in the incoming rows).
+   * 
+   * @return the default model to use when there is no
+   * filename provided in the incoming data row.
+   */
+  public WekaScoringModel getDefaultModel() {
+    return m_defaultModel;
+  }
+  
+  /**
+   * Sets the default model (only used when model file names
+   * are being sourced from a field in the incoming rows).
+   * 
+   * @param defaultM the default model to use.
+   */
+  public void setDefaultModel(WekaScoringModel defaultM) {
+    m_defaultModel = defaultM;
   }
 
   /**
@@ -233,14 +296,14 @@ public class WekaScoringMeta
             m_mappingIndexes[header.classIndex()] ==
             WekaScoringData.TYPE_MISMATCH) {
           m_updateIncrementalModel = false;
-          m_log.logError("[WekaScoringMeta]", Messages.getString("WekaScoringMeta.Log.NoMatchForClass"));
+          logError(Messages.getString("WekaScoringMeta.Log.NoMatchForClass"));
           /*          System.err.println("Can't update model because there is no "
                              +"match for the class attribute in the "
                              +"incoming data stream!!"); */
         }
       } else {
         m_updateIncrementalModel = false;
-        m_log.logError("[WekaScoringMeta]", Messages.getString("WekaScoringMeta.Log.ModelNotUpdateable"));
+        logError(Messages.getString("WekaScoringMeta.Log.ModelNotUpdateable"));
         /*        System.err.println("Model is not updateable. Can't learn "
                   + "from incoming data stream!"); */
       }
@@ -279,9 +342,28 @@ public class WekaScoringMeta
                                              m_savedModelFileName));
       }
     }
+    
+    retval.append(XMLHandler.addTagValue("file_name_from_field", 
+        m_fileNameFromField));
+    if (m_fileNameFromField) {
+      // any non-null field name?
+      if (!Const.isEmpty(m_fieldNameToLoadModelFrom)) {
+        retval.append(XMLHandler.addTagValue("field_name_to_load_from", 
+            m_fieldNameToLoadModelFrom));
+        System.out.println(Messages.getString("WekaScoringMeta.Log.ModelSourcedFromField")
+            + " " + m_fieldNameToLoadModelFrom);
+      }
+    }
+    
+    retval.append(XMLHandler.addTagValue("cache_loaded_models", 
+        m_cacheLoadedModels));
+    
+    WekaScoringModel temp = (m_fileNameFromField)
+      ? m_defaultModel
+      : m_model;
 
     // can we save the model as XML?
-    if (m_model != null 
+    if (temp != null 
         && Const.isEmpty(m_modelFileName)) {
 
       try {
@@ -289,27 +371,34 @@ public class WekaScoringMeta
         ByteArrayOutputStream bao = new ByteArrayOutputStream();
         BufferedOutputStream bos = new BufferedOutputStream(bao);
         ObjectOutputStream oo = new ObjectOutputStream(bos);
-        oo.writeObject(m_model);
+        oo.writeObject(temp);
         oo.flush();
         byte[] model = bao.toByteArray();
         String base64model = XMLHandler.addTagValue("weka_scoring_model",
                                                     model);
-        m_log.logDebug("[WekaScoringMeta]",
-                       Messages.getString("WekaScoringMeta.Log.SizeOfModel")
+        String modType = (m_fileNameFromField) ? "default" : "";
+        System.out.println("Serializing " + modType + " model.");
+        System.out.println(Messages.getString("WekaScoringMeta.Log.SizeOfModel")
                        + " " + base64model.length());
         //        System.err.println("Size of base64 model "+base64model.length());
         retval.append(base64model);
         oo.close();
       } catch (Exception ex) { 
-        m_log.logError("[WekaScoringMeta]", 
-                       Messages.getString("WekaScoringMeta.Log.Base64SerializationProblem"));
+        System.out.println(Messages.getString("WekaScoringMeta.Log.Base64SerializationProblem"));
         //        System.err.println("Problem serializing model to base64 (Meta.getXML())");
       }
     } else {
       if (!Const.isEmpty(m_modelFileName)) {
-        m_log.logBasic("[WekaScoringMeta]", 
+        /*m_log.logBasic("[WekaScoringMeta] ", 
                        Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
-                       + " " + m_modelFileName);
+                       + " " + m_modelFileName); */
+
+        System.out.println(Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
+            + " " + m_modelFileName);
+
+        /*logBasic(Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
+            + " " + m_modelFileName); */
+        //logBasic(lm);
       }
       /*      System.err.println("Model will be sourced from file "
               + m_modelFileName); */
@@ -358,13 +447,27 @@ public class WekaScoringMeta
       try {
         SerializedObject so = new SerializedObject(m_model);
         WekaScoringModel copy = (WekaScoringModel)so.getObject();
+        copy.setLog(getLog());
         retval.setModel(copy);
       } catch (Exception ex) {
-        m_log.logError("[WekaScoringMeta]",
-                       Messages.getString("WekaScoringMeta.Log.DeepCopyingError"));
+        logError(Messages.getString("WekaScoringMeta.Log.DeepCopyingError"));
         //        System.err.println("Problem deep copying scoring model (meta.clone())");
       }
     }
+    
+    // deep copy the default model (if any)
+    if (m_defaultModel != null) {
+      try {
+        SerializedObject so = new SerializedObject(m_defaultModel);
+        WekaScoringModel copy = (WekaScoringModel)so.getObject();
+        copy.setLog(getLog());
+        retval.setDefaultModel(copy);
+      } catch (Exception ex) {
+        logError(Messages.getString("WekaScoringMeta.Log.DeepCopyingError"));
+        //        System.err.println("Problem deep copying scoring model (meta.clone())");
+      }
+    }
+    
     return retval;
   }
 
@@ -384,13 +487,35 @@ public class WekaScoringMeta
                       List<DatabaseMeta> databases, 
                       Map<String, Counter> counters)
     throws KettleXMLException {
+    
+    // Make sure that all Weka packages have been loaded
+    weka.core.WekaPackageManager.loadPackages(false);
 
     int nrModels = 
       XMLHandler.countNodes(stepnode, XML_TAG);
 
     if (nrModels > 0) {
       Node wekanode = 
-        XMLHandler.getSubNodeByNr(stepnode, XML_TAG, 0); 
+        XMLHandler.getSubNodeByNr(stepnode, XML_TAG, 0);
+      
+      String temp = XMLHandler.getTagValue(wekanode, "file_name_from_field");
+      if (temp.equalsIgnoreCase("N")) {
+        m_fileNameFromField = false;
+      } else {
+        m_fileNameFromField = true;
+      }
+      
+      if (m_fileNameFromField) {
+        m_fieldNameToLoadModelFrom = 
+          XMLHandler.getTagValue(wekanode, "field_name_to_load_from");
+      }
+      
+      temp = XMLHandler.getTagValue(wekanode, "cache_loaded_models");
+      if (temp.equalsIgnoreCase("N")) {
+        m_cacheLoadedModels = false;
+      } else {
+        m_cacheLoadedModels = true;
+      }
 
       // try and get the XML-based model
       boolean success = false;
@@ -401,9 +526,11 @@ public class WekaScoringMeta
         //            System.err.println(base64modelXML);
         deSerializeBase64Model(base64modelXML);
         success = true;
+        
+        String modType = (m_fileNameFromField) ? "default" : "";
+        logBasic("Deserializing " + modType + " model.");
         //        System.err.println("Successfully de-serialized model!");
-        m_log.logDetailed("[WekaScoringMeta]",
-                          Messages.getString("WekaScoringMeta.Log.DeserializationSuccess"));
+        logDetailed(Messages.getString("WekaScoringMeta.Log.DeserializationSuccess"));
       } catch (Exception ex) {
         success = false;
       }
@@ -414,7 +541,7 @@ public class WekaScoringMeta
           XMLHandler.getTagValue(wekanode, "model_file_name");
       }
 
-      String temp = XMLHandler.getTagValue(wekanode, "output_probabilities");
+      temp = XMLHandler.getTagValue(wekanode, "output_probabilities");
       if (temp.equalsIgnoreCase("N")) {
         m_outputProbabilities = false;
       } else {
@@ -431,7 +558,7 @@ public class WekaScoringMeta
       if (m_updateIncrementalModel) {
         m_savedModelFileName = 
           XMLHandler.getTagValue(wekanode, "model_export_file_name");
-      }
+      }      
     }
 
     // check the model status. If no model and we have
@@ -440,7 +567,8 @@ public class WekaScoringMeta
     // user opens the configuration gui in Spoon. This affects
     // the result of the getFields method and has an impact
     // on downstream steps that need to know what we produce
-    if (m_model == null && !Const.isEmpty(m_modelFileName)) {
+    WekaScoringModel temp = (m_fileNameFromField) ? m_defaultModel : m_model;
+    if (temp == null && !Const.isEmpty(m_modelFileName)) {
       try {
         loadModelFile();
       } catch (Exception ex) {
@@ -454,7 +582,13 @@ public class WekaScoringMeta
     File modelFile = 
       new File(m_modelFileName);
     if (modelFile.exists()) {
-      m_model = WekaScoringData.loadSerializedModel(modelFile);
+      if (m_fileNameFromField) {
+        logBasic("loading default model from file.");
+        m_defaultModel = WekaScoringData.loadSerializedModel(modelFile, getLog());
+      } else {
+        logBasic("loading model from file.");
+        m_model = WekaScoringData.loadSerializedModel(modelFile, getLog());
+      }
     }
   }
 
@@ -468,7 +602,12 @@ public class WekaScoringMeta
     // now de-serialize
     ByteArrayInputStream bis = new ByteArrayInputStream(model);
     ObjectInputStream ois = new ObjectInputStream(bis);
-    m_model = (WekaScoringModel)ois.readObject();
+    
+    if (m_fileNameFromField) {
+      m_defaultModel = (WekaScoringModel)ois.readObject();
+    } else {
+      m_model = (WekaScoringModel)ois.readObject();
+    }
     ois.close();
   }
 
@@ -480,13 +619,26 @@ public class WekaScoringMeta
    * @exception KettleException if an error occurs
    */
   public void readRep(Repository rep, 
-                      long id_step, 
+                      ObjectId id_step, 
                       List<DatabaseMeta> databases, 
                       Map<String, Counter> counters) 
     throws KettleException {
     
+    // Make sure that all Weka packages have been loaded
+    weka.core.WekaPackageManager.loadPackages(false);
+    
+    m_fileNameFromField = 
+      rep.getStepAttributeBoolean(id_step, 0, "file_name_from_field");
 
-    // try and get a filename first as this overides any model stored
+    if (m_fileNameFromField) {
+      m_fieldNameToLoadModelFrom = 
+        rep.getStepAttributeString(id_step, 0, "field_name_to_load_from");
+    }
+    
+    m_cacheLoadedModels = 
+      rep.getStepAttributeBoolean(id_step, 0, "cache_loaded_models");
+
+    // try and get a filename first as this overrides any model stored
     // in the repository
     boolean success = false;
     try {
@@ -504,8 +656,7 @@ public class WekaScoringMeta
       // try and get the model itself...
       try {
         String base64XMLModel = rep.getStepAttributeString(id_step, 0, "weka_scoring_model");
-        m_log.logDebug("[WekaScoringMeta]",
-                       Messages.getString("WekaScoringMeta.Log.SizeOfModel")
+        logDebug(Messages.getString("WekaScoringMeta.Log.SizeOfModel")
                        + " " + base64XMLModel.length());
           //        System.err.println("Size of base64 string read " + base64XMLModel.length());
         //        System.err.println(xmlModel);
@@ -531,7 +682,7 @@ public class WekaScoringMeta
     if (m_updateIncrementalModel) {
       m_savedModelFileName =
         rep.getStepAttributeString(id_step, 0, "model_export_file_name");
-    }
+    }    
     
     // check the model status. If no model and we have
     // a file name, try and load here. Otherwise, loading
@@ -539,14 +690,15 @@ public class WekaScoringMeta
     // user opens the configuration gui in Spoon. This affects
     // the result of the getFields method and has an impact
     // on downstream steps that need to know what we produce
-    if (m_model == null && !Const.isEmpty(m_modelFileName)) {
+    WekaScoringModel temp = (m_fileNameFromField) ? m_defaultModel : m_model;
+    if (temp == null && !Const.isEmpty(m_modelFileName)) {
       try {
         loadModelFile();
       } catch (Exception ex) {
         throw new KettleException("Problem de-serializing model "
                                   + "file using supplied file name!"); 
       }
-    }
+    }        
   }
 
   /**
@@ -558,8 +710,8 @@ public class WekaScoringMeta
    * @exception KettleException if an error occurs
    */
   public void saveRep(Repository rep, 
-                      long id_transformation, 
-                      long id_step)
+                      ObjectId id_transformation, 
+                      ObjectId id_step)
     throws KettleException {
 
     rep.saveStepAttribute(id_transformation,
@@ -581,19 +733,36 @@ public class WekaScoringMeta
                               m_savedModelFileName);
       }
     }
-
-    if (m_model != null 
+    
+    rep.saveStepAttribute(id_transformation,
+       id_step, 0, "file_name_from_field", m_fileNameFromField);
+    if (m_fileNameFromField) {
+      rep.saveStepAttribute(id_transformation, id_step, 0, 
+          "field_name_to_load_from", m_fieldNameToLoadModelFrom);
+    }
+    
+    rep.saveStepAttribute(id_transformation, id_step, 0, 
+        "cache_loaded_models", m_cacheLoadedModels);
+    
+    WekaScoringModel temp = (m_fileNameFromField)
+      ? m_defaultModel
+      : m_model;
+       
+    if (temp != null 
         && Const.isEmpty(m_modelFileName)) {
       try {
         // Convert model to base64 encoding
         ByteArrayOutputStream bao = new ByteArrayOutputStream();
         BufferedOutputStream bos = new BufferedOutputStream(bao);
         ObjectOutputStream oo = new ObjectOutputStream(bos);
-        oo.writeObject(m_model);
+        oo.writeObject(temp);
         oo.flush();
         byte[] model = bao.toByteArray();
-        String base64XMLModel = Repository.byteArrayToString(model);
+        String base64XMLModel = KettleDatabaseRepository.byteArrayToString(model);
 
+        String modType = (m_fileNameFromField) ? "default" : "";
+        logBasic("Serializing " + modType + " model.");
+        
         // String xmlModel = XStream.serialize(m_model);
         rep.saveStepAttribute(id_transformation,
                               id_step, 0,
@@ -601,16 +770,14 @@ public class WekaScoringMeta
                               base64XMLModel);
         oo.close();
       } catch (Exception ex) {
-        m_log.logError("[WekaScoringMeta]", 
-                       Messages.getString("WekaScoringDialog.Log.Base64SerializationProblem"));
+        logError(Messages.getString("WekaScoringDialog.Log.Base64SerializationProblem"));
         //        System.err.println("Problem serializing model to base64 (Meta.saveRep())");
       }
     } else {
       // either XStream is not present or user wants to source from
       // file
       if (!Const.isEmpty(m_modelFileName)) {
-        m_log.logBasic("[WekaScoringMeta]",
-                       Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
+        logBasic(Messages.getString("WekaScoringMeta.Log.ModelSourcedFromFile")
                        + " " + m_modelFileName);
       }
       /*      System.err.println("Model will be sourced from file "
@@ -667,7 +834,7 @@ public class WekaScoringMeta
       
       try {
         WekaScoringModel model = 
-          WekaScoringData.loadSerializedModel(modelFile);
+          WekaScoringData.loadSerializedModel(modelFile, getLog());
         setModel(model);
       } catch (Exception ex) {
         throw new KettleStepException("Problem de-serializing model file");
@@ -695,7 +862,7 @@ public class WekaScoringMeta
           newVM.setOrigin(origin);
           row.addValueMeta(newVM);
           //          System.err.println("Adding " + newVM.getName());
-          m_log.logDebug("[WekaScoringMeta]", "Adding " + newVM.getName());
+          logDebug("Adding " + newVM.getName());
         } else {
           for (int i = 0; i < header.classAttribute().numValues(); i++) {
             String classVal = header.classAttribute().value(i);
@@ -705,7 +872,7 @@ public class WekaScoringMeta
                             ValueMetaInterface.TYPE_NUMBER);
             newVM.setOrigin(origin);
             row.addValueMeta(newVM);
-            m_log.logDebug("[WekaScoringMeta]", "Adding " + newVM.getName());
+            logDebug("Adding " + newVM.getName());
             //            System.err.println("Adding "+newVM.getName());
           }
         }
@@ -720,7 +887,7 @@ public class WekaScoringMeta
                               ValueMetaInterface.TYPE_NUMBER);
               newVM.setOrigin(origin);
               row.addValueMeta(newVM);
-              m_log.logDebug("[WekaScoringMeta]", "Adding " + newVM.getName());
+              logDebug("Adding " + newVM.getName());
               //              System.err.println("Adding "+newVM.getName());              
             }
           } catch (Exception ex) {
@@ -733,7 +900,7 @@ public class WekaScoringMeta
                           ValueMetaInterface.TYPE_NUMBER);
           newVM.setOrigin(origin);
           row.addValueMeta(newVM);
-          m_log.logDebug("[WekaScoringMeta]", "Adding " + newVM.getName());
+          logDebug("Adding " + newVM.getName());
           //          System.err.println("Adding " + newVM.getName());
         }
       }

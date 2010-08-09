@@ -24,6 +24,8 @@ package org.pentaho.di.scoring;
 
 import java.io.Serializable;
 
+import org.pentaho.di.core.logging.LogChannelInterface;
+
 import weka.core.Instances;
 import weka.core.Instance;
 import weka.classifiers.Classifier;
@@ -49,12 +51,21 @@ public abstract class WekaScoringModel implements Serializable {
    *
    * @param model the actual Weka model to enacpsulate
    */
-  public WekaScoringModel(Object model) {
-    if (model instanceof PMMLModel) {
-      LogAdapter logger = new LogAdapter();
-      ((PMMLModel)model).setLog(logger);
-    }
+  public WekaScoringModel(Object model) {    
     setModel(model);
+  }
+  
+  /**
+   * Set the log to pass on to the model. Only PMML models
+   * require logging.
+   * 
+   * @param log the log to use
+   */
+  public void setLog(LogChannelInterface log) {
+    if (getModel() instanceof PMMLModel) {
+      LogAdapter logger = new LogAdapter(log);
+      ((PMMLModel)getModel()).setLog(logger);
+    }
   }
 
   /**

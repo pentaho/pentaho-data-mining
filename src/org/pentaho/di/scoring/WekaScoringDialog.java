@@ -22,58 +22,46 @@
 
 package org.pentaho.di.scoring;
 
+import java.io.File;
+
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.custom.CTabItem;
-import org.eclipse.swt.custom.CTabFolder;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.graphics.Font;
-
 import org.pentaho.di.core.Const;
+import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMeta;
-
-import org.pentaho.di.core.Props;
-import org.pentaho.di.ui.core.dialog.EnterSelectionDialog;
-import org.pentaho.di.ui.core.widget.ColumnInfo;
-import org.pentaho.di.ui.core.widget.TableView;
-import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
+import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
-import weka.core.Instances;
 import weka.core.Attribute;
+import weka.core.Instances;
 import weka.core.xml.XStream;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.io.File;
 
 /**
  * The UI class for the WekaScoring transform
@@ -99,6 +87,24 @@ public class WekaScoringDialog extends BaseStepDialog
 
   // label for the file name field
   private Label m_wlFilename;
+  
+  // label for the lookup model file from field check box
+  private Label m_wAcceptFileNameFromFieldCheckLab;
+  
+  // Checkbox for accept filename from field
+  private Button m_wAcceptFileNameFromFieldCheckBox;
+  
+  // Label for accept filename from field TextVar
+  private Label m_wAcceptFileNameFromFieldTextLab;
+  
+  // TextVar for file name field
+  private TextVar m_wAcceptFileNameFromFieldText;
+  
+  // Label for cache models in memory
+  private Label m_wCacheModelsLab;
+  
+  // Check box for caching models in memory
+  private Button m_wCacheModelsCheckBox;
 
   // label for the output probabilities check box
   private Label m_wOutputProbsLab;
@@ -176,6 +182,10 @@ public class WekaScoringDialog extends BaseStepDialog
    * @return the step name
    */
   public String open() {
+    
+    // Make sure that all Weka packages have been loaded!
+    weka.core.WekaPackageManager.loadPackages(false);
+    
     Shell parent = getParent();
     Display display = parent.getDisplay();
 
@@ -275,68 +285,21 @@ public class WekaScoringDialog extends BaseStepDialog
     m_fdFilename.top = new FormAttachment(0, margin);
     m_fdFilename.right = new FormAttachment(m_wbFilename, -margin);
     m_wFilename.setLayoutData(m_fdFilename);
-
-    // Extension line
-    /*    m_wlExtension = new Label(wFileComp, SWT.RIGHT);
-    m_wlExtension.setText(Messages.getString("System.Label.Extension"));
-    props.setLook(m_wlExtension);
-    m_fdlExtension = new FormData();
-    m_fdlExtension.left = new FormAttachment(0, 0);
-    m_fdlExtension.top  = new FormAttachment(m_wFilename, margin);
-    m_fdlExtension.right = new FormAttachment(middle, -margin);
-    m_wlExtension.setLayoutData(m_fdlExtension);
-    m_wExtension = new Text(wFileComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    m_wExtension.setText("");
-    props.setLook(m_wExtension);
-    m_wExtension.addModifyListener(lsMod);
-    m_fdExtension = new FormData();
-    m_fdExtension.left = new FormAttachment(middle, 0);
-    m_fdExtension.top  = new FormAttachment(m_wFilename, margin);
-    m_fdExtension.right = new FormAttachment(100, 0);
-    m_wExtension.setLayoutData(m_fdExtension); */
     
-    m_fdFileComp = new FormData();
-    m_fdFileComp.left = new FormAttachment(0, 0);
-    m_fdFileComp.top = new FormAttachment(0, 0);
-    m_fdFileComp.right = new FormAttachment(100, 0);
-    m_fdFileComp.bottom = new FormAttachment(100, 0);
-    wFileComp.setLayoutData(m_fdFileComp);
-    
-    wFileComp.layout();
-    m_wFileTab.setControl(wFileComp);
-
-    m_wOutputProbsLab = new Label(wFileComp, SWT.RIGHT);
-    m_wOutputProbsLab.
-      setText(Messages.getString("WekaScoringDialog.OutputProbs.Label"));
-    props.setLook(m_wOutputProbsLab);
-    m_fdlOutputProbs = new FormData();
-    m_fdlOutputProbs.left = new FormAttachment(0, 0);
-    m_fdlOutputProbs.top  = new FormAttachment(m_wFilename, margin);
-    m_fdlOutputProbs.right= new FormAttachment(middle, -margin);
-    m_wOutputProbsLab.setLayoutData(m_fdlOutputProbs);
-    m_wOutputProbs = new Button(wFileComp, SWT.CHECK);
-    props.setLook(m_wOutputProbs);
-    m_fdOutputProbs = new FormData();
-    m_fdOutputProbs.left = new FormAttachment(middle, 0);
-    m_fdOutputProbs.top = new FormAttachment(m_wFilename, margin);
-    m_fdOutputProbs.right = new FormAttachment(100, 0);
-    m_wOutputProbs.setLayoutData(m_fdOutputProbs);
-    
-
     m_wUpdateModelLab = new Label(wFileComp, SWT.RIGHT);
     m_wUpdateModelLab.
       setText(Messages.getString("WekaScoringDialog.UpdateModel.Label"));
     props.setLook(m_wUpdateModelLab);
     m_fdlUpdateModel = new FormData();
     m_fdlUpdateModel.left = new FormAttachment(0, 0);
-    m_fdlUpdateModel.top  = new FormAttachment(m_wOutputProbs, margin);
+    m_fdlUpdateModel.top  = new FormAttachment(m_wFilename, margin);
     m_fdlUpdateModel.right= new FormAttachment(middle, -margin);
     m_wUpdateModelLab.setLayoutData(m_fdlUpdateModel);
     m_wUpdateModel = new Button(wFileComp, SWT.CHECK);
     props.setLook(m_wUpdateModel);
     m_fdUpdateModel = new FormData();
     m_fdUpdateModel.left = new FormAttachment(middle, 0);
-    m_fdUpdateModel.top = new FormAttachment(m_wOutputProbs, margin);
+    m_fdUpdateModel.top = new FormAttachment(m_wFilename, margin);
     m_fdUpdateModel.right = new FormAttachment(100, 0);
     m_wUpdateModel.setLayoutData(m_fdUpdateModel);
     m_wUpdateModel.addSelectionListener(new SelectionAdapter() {
@@ -381,11 +344,138 @@ public class WekaScoringDialog extends BaseStepDialog
     m_fdSaveFilename.right = new FormAttachment(m_wbSaveFilename, -margin);
     m_wSaveFilename.setLayoutData(m_fdSaveFilename);
     m_wSaveFilename.setEnabled(false);
+            
+    m_fdFileComp = new FormData();
+    m_fdFileComp.left = new FormAttachment(0, 0);
+    m_fdFileComp.top = new FormAttachment(0, 0);
+    m_fdFileComp.right = new FormAttachment(100, 0);
+    m_fdFileComp.bottom = new FormAttachment(100, 0);
+    wFileComp.setLayoutData(m_fdFileComp);
+    
+    wFileComp.layout();
+    m_wFileTab.setControl(wFileComp);
+        
+    m_wAcceptFileNameFromFieldCheckLab = new Label(wFileComp, SWT.RIGHT);
+    m_wAcceptFileNameFromFieldCheckLab.
+      setText(Messages.getString("WekaScoringDialog.AcceptFileNamesFromFieldCheck.Label"));
+    props.setLook(m_wAcceptFileNameFromFieldCheckLab);
+    FormData fdAcceptCheckLab = new FormData();
+    fdAcceptCheckLab.left = new FormAttachment(0, 0);
+    fdAcceptCheckLab.top = new FormAttachment(m_wSaveFilename, margin);
+    fdAcceptCheckLab.right = new FormAttachment(middle, -margin);
+    m_wAcceptFileNameFromFieldCheckLab.setLayoutData(fdAcceptCheckLab);
+    m_wAcceptFileNameFromFieldCheckBox = new Button(wFileComp, SWT.CHECK);
+    props.setLook(m_wAcceptFileNameFromFieldCheckBox);
+    FormData fdAcceptCheckBox = new FormData();
+    fdAcceptCheckBox.left = new FormAttachment(middle, 0);
+    fdAcceptCheckBox.top = new FormAttachment(m_wSaveFilename, margin);
+    fdAcceptCheckBox.right = new FormAttachment(100, 0);
+    m_wAcceptFileNameFromFieldCheckBox.setLayoutData(fdAcceptCheckBox);
+    
+    m_wAcceptFileNameFromFieldCheckBox.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        m_currentMeta.setChanged();
+        if (m_wAcceptFileNameFromFieldCheckBox.getSelection()) {
+          m_wUpdateModel.setSelection(false);
+          m_wUpdateModel.setEnabled(false);
+          m_wSaveFilename.setText("");
+          m_wlFilename.
+            setText(Messages.getString("WekaScoringDialog.Default.Label"));
+          if (!Const.isEmpty(m_wFilename.getText())) {
+            // load - loadModel() will take care of storing it in
+            // either the main or default model in the current meta
+            loadModel();
+          } else {
+            // try and shift the main model (if non-null) over into the
+            // default model in current meta
+            m_currentMeta.setDefaultModel(m_currentMeta.getModel());
+            m_currentMeta.setModel(null);
+          }
+          
+        } else {
+          if (!Const.isEmpty(m_wFilename.getText())) {
+            // load - loadModel() will take care of storing it in
+            // either the main or default model in the current meta
+            loadModel();
+          } else {
+            // try and shift the default model (if non-null) over into the
+            // main model in current meta
+            m_currentMeta.setModel(m_currentMeta.getDefaultModel());
+            m_currentMeta.setDefaultModel(null);
+          }
+          
+          m_wCacheModelsCheckBox.setSelection(false);
+          m_wlFilename.
+            setText(Messages.getString("WekaScoringDialog.Filename.Label"));
+        }
 
+        m_wCacheModelsCheckBox.setEnabled(m_wAcceptFileNameFromFieldCheckBox.getSelection());
+        m_wAcceptFileNameFromFieldText.setEnabled(m_wAcceptFileNameFromFieldCheckBox.getSelection());
+        m_wbSaveFilename.setEnabled(!m_wAcceptFileNameFromFieldCheckBox.getSelection() && 
+            m_wUpdateModel.getSelection());
+        m_wSaveFilename.setEnabled(!m_wAcceptFileNameFromFieldCheckBox.getSelection() &&
+            m_wUpdateModel.getSelection());
+      }
+    });
+    
+    //
+    m_wAcceptFileNameFromFieldTextLab = new Label(wFileComp, SWT.RIGHT);
+    m_wAcceptFileNameFromFieldTextLab.
+      setText(Messages.getString("WekaScoringDialog.AcceptFileNamesFromField.Label"));
+    props.setLook(m_wAcceptFileNameFromFieldTextLab);
+    FormData fdAcceptLab = new FormData();
+    fdAcceptLab.left = new FormAttachment(0, 0);
+    fdAcceptLab.top = new FormAttachment(m_wAcceptFileNameFromFieldCheckBox, margin);
+    fdAcceptLab.right = new FormAttachment(middle, -margin);
+    m_wAcceptFileNameFromFieldTextLab.setLayoutData(fdAcceptLab);
+    m_wAcceptFileNameFromFieldText = new TextVar(transMeta, wFileComp, 
+        SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    props.setLook(m_wAcceptFileNameFromFieldText);
+    m_wAcceptFileNameFromFieldText.addModifyListener(lsMod);
+    FormData fdAcceptText = new FormData();
+    fdAcceptText.left = new FormAttachment(middle, 0);
+    fdAcceptText.top = new FormAttachment(m_wAcceptFileNameFromFieldCheckBox, margin);
+    fdAcceptText.right = new FormAttachment(100, 0);
+    m_wAcceptFileNameFromFieldText.setLayoutData(fdAcceptText);
+    m_wAcceptFileNameFromFieldText.setEnabled(false);
+    
+    m_wCacheModelsLab = new Label(wFileComp, SWT.RIGHT);
+    m_wCacheModelsLab.
+      setText(Messages.getString("WekaScoringDialog.CacheModels.Label"));
+    props.setLook(m_wCacheModelsLab  );
+    FormData fdCacheLab = new FormData();
+    fdCacheLab.left = new FormAttachment(0, 0);
+    fdCacheLab.top = new FormAttachment(m_wAcceptFileNameFromFieldText, margin);
+    fdCacheLab.right = new FormAttachment(middle, -margin);
+    m_wCacheModelsLab.setLayoutData(fdCacheLab);
+    //
+    m_wCacheModelsCheckBox = new Button(wFileComp, SWT.CHECK);
+    props.setLook(m_wCacheModelsCheckBox);
+    FormData fdCacheCheckBox = new FormData();
+    fdCacheCheckBox.left = new FormAttachment(middle, 0);
+    fdCacheCheckBox.top = new FormAttachment(m_wAcceptFileNameFromFieldText, margin);
+    fdCacheCheckBox.right = new FormAttachment(100, 0);
+    m_wCacheModelsCheckBox.setLayoutData(fdCacheCheckBox);
+    m_wCacheModelsCheckBox.setEnabled(false);
+        
 
-    //-----------------
-
-
+    m_wOutputProbsLab = new Label(wFileComp, SWT.RIGHT);
+    m_wOutputProbsLab.
+      setText(Messages.getString("WekaScoringDialog.OutputProbs.Label"));
+    props.setLook(m_wOutputProbsLab);
+    m_fdlOutputProbs = new FormData();
+    m_fdlOutputProbs.left = new FormAttachment(0, 0);
+    m_fdlOutputProbs.top  = new FormAttachment(m_wCacheModelsCheckBox, margin);
+    m_fdlOutputProbs.right= new FormAttachment(middle, -margin);
+    m_wOutputProbsLab.setLayoutData(m_fdlOutputProbs);
+    m_wOutputProbs = new Button(wFileComp, SWT.CHECK);
+    props.setLook(m_wOutputProbs);
+    m_fdOutputProbs = new FormData();
+    m_fdOutputProbs.left = new FormAttachment(middle, 0);
+    m_fdOutputProbs.top = new FormAttachment(m_wCacheModelsCheckBox, margin);
+    m_fdOutputProbs.right = new FormAttachment(100, 0);
+    m_wOutputProbs.setLayoutData(m_fdOutputProbs);
+    
     
     // Fields mapping tab
     m_wFieldsTab = new CTabItem(m_wTabFolder, SWT.NONE);
@@ -556,8 +646,7 @@ public class WekaScoringDialog extends BaseStepDialog
     m_wFilename.addSelectionListener(new SelectionAdapter() {
         public void widgetDefaultSelected(SelectionEvent e) {
           if (!loadModel()) {
-            log.logError("[WekaScoringDialog]",
-                         Messages.getString("WekaScoringDialog.Log.FileLoadingError"));
+            log.logError(Messages.getString("WekaScoringDialog.Log.FileLoadingError"));
             //            System.err.println("Problem loading model file!");
           }
         }
@@ -626,8 +715,7 @@ public class WekaScoringDialog extends BaseStepDialog
 
              // try to load model file and display model
              if (!loadModel()) {
-               log.logError("[WekaScoringDialog]",
-                            Messages.getString("WekaScoringDialog.Log.FileLoadingError"));
+               log.logError(Messages.getString("WekaScoringDialog.Log.FileLoadingError"));
                //               System.err.println("Problem loading model file!");
              }
            }
@@ -716,8 +804,7 @@ public class WekaScoringDialog extends BaseStepDialog
         modelFile = new File(new java.net.URI(modName));
     } catch (Exception ex) {
         //      System.err.println("Malformed URI");
-        log.logError("[WekaScoringDialog]",
-                     Messages.getString("WekaScoringDialog.Log.MalformedURI"));
+        log.logError(Messages.getString("WekaScoringDialog.Log.MalformedURI"));
         return false;
       }
     } else {
@@ -728,9 +815,14 @@ public class WekaScoringDialog extends BaseStepDialog
     if (!Const.isEmpty(filename) && modelFile.exists()) {
       try {
         WekaScoringModel tempM = 
-          WekaScoringData.loadSerializedModel(modelFile);
+          WekaScoringData.loadSerializedModel(modelFile, log);
         m_wModelText.setText(tempM.toString());
-        m_currentMeta.setModel(tempM);
+        
+        if (m_wAcceptFileNameFromFieldCheckBox.getSelection()) {
+          m_currentMeta.setDefaultModel(tempM);
+        } else {
+          m_currentMeta.setModel(tempM);
+        }
 
         checkAbilityToProduceProbabilities(tempM);
         checkAbilityToUpdateModelIncrementally(tempM);
@@ -740,8 +832,7 @@ public class WekaScoringDialog extends BaseStepDialog
         mappingString(tempM);
         success = true;
       } catch (Exception ex) {
-        log.logError("[WekaScoringDialog]", 
-                     Messages.getString("WekaScoringDialog.Log.FileLoadingError"));
+        log.logError(Messages.getString("WekaScoringDialog.Log.FileLoadingError"));
         //      System.err.println("Problem loading model file...");
       }
     }
@@ -827,8 +918,7 @@ public class WekaScoringDialog extends BaseStepDialog
         m_wMappingText.setText(result.toString());
       }
     } catch (KettleException e) {
-      log.logError(toString(),
-                   Messages.getString("WekaScoringDialog.Log.UnableToFindInput"));
+      log.logError(Messages.getString("WekaScoringDialog.Log.UnableToFindInput"));
       return;
     }
   }
@@ -837,12 +927,34 @@ public class WekaScoringDialog extends BaseStepDialog
    * Grab data out of the step meta object
    */
   public void getData() {
+    
+    if (m_currentMeta.getFileNameFromField()) {
+      m_wAcceptFileNameFromFieldCheckBox.setSelection(true);
+      m_wCacheModelsCheckBox.setEnabled(true);
+      m_wSaveFilename.setEnabled(false);
+      m_wbSaveFilename.setEnabled(false);
+      m_wSaveFilename.setText("");
+      m_wUpdateModel.setEnabled(false);
+      if (!Const.isEmpty(m_currentMeta.getFieldNameToLoadModelFrom())) {
+        m_wAcceptFileNameFromFieldText.
+          setText(m_currentMeta.getFieldNameToLoadModelFrom());
+      }
+      m_wAcceptFileNameFromFieldText.setEnabled(true);
+      
+      m_wCacheModelsCheckBox.setSelection(m_currentMeta.getCacheLoadedModels());
+      m_wlFilename.
+        setText(Messages.getString("WekaScoringDialog.Default.Label"));
+    }
+    
     if (m_currentMeta.getSerializedModelFileName() != null) {
       m_wFilename.setText(m_currentMeta.getSerializedModelFileName());
     }
 
     m_wOutputProbs.setSelection(m_currentMeta.getOutputProbabilities());
-    m_wUpdateModel.setSelection(m_currentMeta.getUpdateIncrementalModel());
+    
+    if (!m_currentMeta.getFileNameFromField()) {
+      m_wUpdateModel.setSelection(m_currentMeta.getUpdateIncrementalModel());
+    }
 
     if (m_wUpdateModel.getSelection()) {
       if (m_currentMeta.getSavedModelFileName() != null) {
@@ -850,19 +962,23 @@ public class WekaScoringDialog extends BaseStepDialog
       }
     }
     
-    // Grab model if it is available
-    WekaScoringModel tempM = m_currentMeta.getModel();
-    if (tempM != null) {
-      m_wModelText.setText(tempM.toString());
+    // Grab model if it is available (and we are not reading model file
+    // names from a field in the incoming data
+  //  if (!m_wAcceptFileNameFromFieldCheckBox.getSelection()) {
+      WekaScoringModel tempM = (m_currentMeta.getFileNameFromField()) 
+        ? m_currentMeta.getDefaultModel() : m_currentMeta.getModel();
+      if (tempM != null) {
+        m_wModelText.setText(tempM.toString());
 
-      // Grab mappings if available
-      mappingString(tempM);
-      checkAbilityToProduceProbabilities(tempM);
-      checkAbilityToUpdateModelIncrementally(tempM);
-    } else {
-      // try loading the model
-      loadModel();
-    }
+        // Grab mappings if available
+        mappingString(tempM);
+        checkAbilityToProduceProbabilities(tempM);
+        checkAbilityToUpdateModelIncrementally(tempM);
+      } else {
+        // try loading the model
+        loadModel();
+      }
+    //}
   }
 
   private void checkAbilityToUpdateModelIncrementally(WekaScoringModel tempM) {
@@ -875,7 +991,7 @@ public class WekaScoringDialog extends BaseStepDialog
       // clear the text field
       m_wSaveFilename.setText("");
 
-    } else {
+    } else if (!m_wAcceptFileNameFromFieldCheckBox.getSelection()) {
       m_wUpdateModel.setEnabled(true);
       // enable the save field and button if the check box is selected
       if(m_wUpdateModel.getSelection()) {
@@ -919,7 +1035,10 @@ public class WekaScoringDialog extends BaseStepDialog
     m_currentMeta.setChanged(changed);
     //    m_currentMeta.setModel(null);
     // revert to original model
-    m_currentMeta.setModel(m_originalMeta.getModel());
+    WekaScoringModel temp = (m_originalMeta.getFileNameFromField())
+      ? m_originalMeta.getDefaultModel()
+      : m_originalMeta.getModel();
+    m_currentMeta.setModel(temp);
     dispose();
   }
 
@@ -930,13 +1049,23 @@ public class WekaScoringDialog extends BaseStepDialog
 
     stepname = m_wStepname.getText(); // return value
     
-    if (!Const.isEmpty(m_wFilename.getText())) {
-      /*      String modFname = transMeta.
+    m_currentMeta.setFileNameFromField(m_wAcceptFileNameFromFieldCheckBox.getSelection());
+    
+//    if (!m_wAcceptFileNameFromFieldCheckBox.getSelection()) {
+      if (!Const.isEmpty(m_wFilename.getText())) {
+        /*      String modFname = transMeta.
               environmentSubstitute(m_wFilename.getText()); */
-      m_currentMeta.setSerializedModelFileName(m_wFilename.getText());    
-    } else {
-      m_currentMeta.setSerializedModelFileName(null);
-    }
+        m_currentMeta.setSerializedModelFileName(m_wFilename.getText());    
+      } else {
+        m_currentMeta.setSerializedModelFileName(null);
+      }
+//    } else {
+      if (!Const.isEmpty(m_wAcceptFileNameFromFieldText.getText())) {
+        m_currentMeta.setFieldNameToLoadModelFrom(m_wAcceptFileNameFromFieldText.getText());
+      }
+      m_currentMeta.setCacheLoadedModels(m_wCacheModelsCheckBox.getSelection());
+    //}
+    
     m_currentMeta.setOutputProbabilities(m_wOutputProbs.getSelection());
     m_currentMeta.setUpdateIncrementalModel(m_wUpdateModel.getSelection());
 

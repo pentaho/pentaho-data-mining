@@ -22,21 +22,13 @@
  
 package org.pentaho.di.scoring;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.pentaho.di.compatibility.*;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.exception.KettleStepException;
-import org.pentaho.di.core.exception.KettleValueException;
-import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.core.row.RowMeta;
-import org.pentaho.di.core.row.ValueDataUtil;
-import org.pentaho.di.core.row.ValueMeta;
-import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -72,6 +64,17 @@ public class WekaScoring extends BaseStep
   private WekaScoringData m_data;
 
   private TransMeta m_transMeta;
+  
+  // only used when grabbing model file names from the incoming stream
+  private int m_indexOfFieldToLoadFrom = -1;
+  
+  // cache for models that are loaded from files specified in
+  // incoming rows
+  private Map<String, WekaScoringModel> m_modelCache;  
+  
+  // model filename from the last row processed (if reading
+  // model filenames from a row field
+  private String m_lastRowModelFile = "";
 
   /**
    * Creates a new <code>WekaScoring</code> instance.
@@ -88,6 +91,97 @@ public class WekaScoring extends BaseStep
     super(stepMeta, stepDataInterface, copyNr, transMeta, trans);
     m_transMeta = transMeta;
   }
+  
+  /**
+   * Sets the model to use from the path supplied in a
+   * user chosen field of the incoming data stream. User
+   * may opt to have loaded models cached in memory. User
+   * may also opt to supply a default model to be used when
+   * there is none specified in the field value.
+   * 
+   * @param row
+   * @throws KettleException
+   */
+  private void setModelFromField(Object[] row) 
+    throws KettleException {
+    
+    RowMetaInterface inputRowMeta = getInputRowMeta();
+    String modelFileName = inputRowMeta.getString(row, m_indexOfFieldToLoadFrom);
+    
+    if (Const.isEmpty(modelFileName)) {
+      // see if there is a default model to use
+      WekaScoringModel defaultM = m_meta.getDefaultModel();
+      if (defaultM == null) {
+        throw new KettleException("No model file name specified in field and no " +
+        		"default model to use!");
+      }
+      logDebug("Using default model.");
+      m_meta.setModel(defaultM);
+      return;
+    }
+    
+    String resolvedName =  m_transMeta.environmentSubstitute(modelFileName);
+    
+    if (resolvedName.equals(m_lastRowModelFile)) {
+      // nothing to do, just return
+      return;
+    }
+    
+    if (m_meta.getCacheLoadedModels()) {
+      WekaScoringModel modelToUse = m_modelCache.get(resolvedName);
+      if (modelToUse != null) {
+        logDebug("Found model in cache. " + 
+            modelToUse.getModel().getClass());
+        m_meta.setModel(modelToUse);
+        m_lastRowModelFile = resolvedName;
+        return;
+      }
+    }
+    
+    // load the model
+    logDebug("Loading model using field value" + 
+        m_transMeta.environmentSubstitute(modelFileName));
+    WekaScoringModel modelToUse = setModel(modelFileName);
+
+    if (m_meta.getCacheLoadedModels()) {
+      m_modelCache.put(resolvedName, modelToUse);
+    }
+  }
+  
+  private WekaScoringModel setModel(String modelFileName) throws KettleException {
+    String modName = m_transMeta.environmentSubstitute(modelFileName);
+    File modelFile = null;
+    if (modName.startsWith("file:")) {
+      try {
+        modName = modName.replace(" ", "%20");
+        modelFile = 
+          new File(new java.net.URI(modName));
+      } catch (Exception ex) {
+        throw new KettleException("Malformed URI for model file");
+      }
+    } else {
+      modelFile = new File(modName);
+    }
+    if (!modelFile.exists()) {
+      throw new KettleException("Serialized model file does "
+                                + "not exist on disk!");
+    }
+    
+    // Load the model
+    WekaScoringModel model = null;
+    try {
+      model = WekaScoringData.loadSerializedModel(modelFile, getLogChannel());
+      m_meta.setModel(model);
+      
+      if (m_meta.getFileNameFromField()) {
+        m_lastRowModelFile = m_transMeta.environmentSubstitute(modelFileName);
+      }
+    } catch (Exception ex) {
+      throw new KettleException("Problem de-serializing model "
+                                + "file!"); 
+    } 
+    return model;
+  }
 
   /**
    * Process an incoming row of data.
@@ -102,13 +196,14 @@ public class WekaScoring extends BaseStep
     throws KettleException {
 
     m_meta = (WekaScoringMeta)smi;
-    m_data = (WekaScoringData)sdi;
+    m_data = (WekaScoringData)sdi;    
 
     Object[] r = getRow();
 
     if (r == null) {
+      
       // see if we have an incremental model that is to be saved somewhere.
-      if (m_meta.getUpdateIncrementalModel()) {
+      if (!m_meta.getFileNameFromField() && m_meta.getUpdateIncrementalModel()) {
         if (!Const.isEmpty(m_meta.getSavedModelFileName())) {
           // try and save that sucker...
           try {
@@ -133,7 +228,12 @@ public class WekaScoring extends BaseStep
         }
       }
 
-      m_meta.getModel().done();
+      if (m_meta.getFileNameFromField()) {
+        // clear the main model
+        m_meta.setModel(null);
+      } else {
+        m_meta.getModel().done();
+      }
 
       setOutputDone();
       return false;
@@ -142,47 +242,45 @@ public class WekaScoring extends BaseStep
     // Handle the first row
     if (first) {
       first = false;
+      
+      // make sure that all Weka packages have been loaded!
+      weka.core.WekaPackageManager.loadPackages(false);
 
       m_data.setOutputRowMeta(getInputRowMeta().clone());
-      
-      // If we don't have a model, or a file name is set, then load from file
-      if (m_meta.getModel() == null || 
+      if (m_meta.getFileNameFromField()) {
+        RowMetaInterface inputRowMeta = getInputRowMeta();
+        
+        m_indexOfFieldToLoadFrom = 
+          inputRowMeta.indexOfValue(m_meta.getFieldNameToLoadModelFrom());
+        
+        if (m_indexOfFieldToLoadFrom < 0) {
+          throw new KettleException("Unable to locate model file field "
+              + m_meta.getFieldNameToLoadModelFrom() + " in the incoming stream!");
+        }
+        
+        if (!inputRowMeta.getValueMeta(m_indexOfFieldToLoadFrom).isString()) {
+          throw new KettleException("Model file field in incoming stream " +
+          		"is not a String field!");
+        }
+        
+        if (m_meta.getCacheLoadedModels()) {
+          m_modelCache = new HashMap<String, WekaScoringModel>();
+        }
+        
+        setModelFromField(r);
+        logBasic("Sourcing model file names from input field " + 
+            m_meta.getFieldNameToLoadModelFrom());
+      } else if (m_meta.getModel() == null || 
           !Const.isEmpty(m_meta.getSerializedModelFileName())) {
+        // If we don't have a model, or a file name is set, then load from file
 
         // Check that we have a file to try and load a classifier from
         if (Const.isEmpty(m_meta.getSerializedModelFileName())) {
           throw new KettleException("No filename to load  "
                                     + "model from!!");
         }
-
-        // Check that the specified file exists (on this file system)
-        String modName = m_transMeta.environmentSubstitute(m_meta.getSerializedModelFileName());
-        File modelFile = null;
-        if (modName.startsWith("file:")) {
-          try {
-            modName = modName.replace(" ", "%20");
-            modelFile = 
-              new File(new java.net.URI(modName));
-          } catch (Exception ex) {
-            throw new KettleException("Malformed URI for model file");
-          }
-        } else {
-          modelFile = new File(modName);
-        }
-        if (!modelFile.exists()) {
-          throw new KettleException("Serialized model file does "
-                                    + "not exist on disk!");
-        }
         
-        // Load the classifier and set up the expected input format
-        // according to what the classifier has been trained on
-        try {
-          WekaScoringModel model = WekaScoringData.loadSerializedModel(modelFile);
-          m_meta.setModel(model);
-        } catch (Exception ex) {
-          throw new KettleException("Problem de-serializing model "
-                                    + "file!"); 
-        }
+        setModel(m_meta.getSerializedModelFileName());        
       }
 
       // Check the input row meta data against the instances
@@ -205,6 +303,9 @@ public class WekaScoring extends BaseStep
 
     // Make prediction for row using model
     try {
+      if (m_meta.getFileNameFromField()) {
+        setModelFromField(r);
+      }
       Object [] outputRow = 
         m_data.generatePrediction(getInputRowMeta(), 
                                   m_data.getOutputRowMeta(),
@@ -214,7 +315,7 @@ public class WekaScoring extends BaseStep
     } catch (Exception ex) {
       throw new KettleException("Unable to make prediction for "
                                 + "row #" + linesRead
-                                + " : " + r); 
+                                + " ( " + ex.getMessage() + ")"); 
     }
     
     if (log.isRowLevel()) { 

@@ -22,29 +22,36 @@
 
 package org.pentaho.di.scoring;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
-import java.io.*;
+import java.util.Vector;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import java.util.Vector;
 
+import org.pentaho.di.core.logging.LogChannelInterface;
+import org.pentaho.di.core.logging.LogWriter;
+import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.step.BaseStepData;
 import org.pentaho.di.trans.step.StepDataInterface;
-import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.exception.KettleValueException;
-import org.pentaho.di.core.row.ValueMetaInterface;
-import org.pentaho.di.core.row.RowDataUtil; 
-import org.pentaho.di.core.logging.LogWriter;
 
-import weka.core.Instances;
 import weka.core.Attribute;
+import weka.core.DenseInstance;
 import weka.core.Instance;
+import weka.core.Instances;
 import weka.core.Utils;
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
 import weka.core.xml.XStream;
-import weka.classifiers.Classifier;
 
 /**
  * Holds temporary data and has routines for loading
@@ -101,7 +108,8 @@ public class WekaScoringData extends BaseStepData
    * @return the model
    * @throws Exception if there is a problem laoding the model.
    */
-  public static WekaScoringModel loadSerializedModel(File modelFile) 
+  public static WekaScoringModel loadSerializedModel(File modelFile, 
+      LogChannelInterface log) 
     throws Exception {
 
     Object model = null;
@@ -115,7 +123,7 @@ public class WekaScoringData extends BaseStepData
       // we will use the mining schema as the instance structure
       header = ((PMMLModel)model).getMiningSchema().getMiningSchemaAsInstances();
     } else if (modelFile.getName().toLowerCase().endsWith(".xstreammodel")) {
-      LogWriter.getInstance().logBasic("[WekaScoringData]",
+      log.logBasic("[WekaScoringData]",
                      Messages.getString("WekaScoringData.Log.LoadXMLModel"));
       //      System.err.println("Trying to load XML model...");
       if (XStream.isPresent()) {
@@ -162,6 +170,8 @@ public class WekaScoringData extends BaseStepData
         ignoredAttsForClustering != null) {
       ((WekaScoringClusterer)wsm).setAttributesToIgnore(ignoredAttsForClustering);
     }
+    
+    wsm.setLog(log);
     return wsm;
   }
 
@@ -381,7 +391,7 @@ public class WekaScoringData extends BaseStepData
 
           // Check for missing value (null or empty string)
           if (tempField.isNull(inputVal)) {
-            m_vals[i] = Instance.missingValue();
+            m_vals[i] = Utils.missingValue();
             continue;
           }
           
@@ -412,7 +422,7 @@ public class WekaScoringData extends BaseStepData
               int index = temp.indexOfValue(s);
               if (index < 0) {
                 // set to missing value
-                m_vals[i] = Instance.missingValue();
+                m_vals[i] = Utils.missingValue();
               } else {
                 m_vals[i] = (double)index;
               }
@@ -420,16 +430,16 @@ public class WekaScoringData extends BaseStepData
             break;
           default:
             //            System.err.println("Missing - default " + i);
-            m_vals[i] = Instance.missingValue();
+            m_vals[i] = Utils.missingValue();
           }
         } catch (Exception e) {
           //          System.err.println("Exception - missing " + i);
-          m_vals[i] = Instance.missingValue();
+          m_vals[i] = Utils.missingValue();
         }
       } else {
         // set to missing value
         //        System.err.println("Unmapped " + i);
-        m_vals[i] = Instance.missingValue();
+        m_vals[i] = Utils.missingValue();
       }
 
         //      m_vals[i] = Instance.missingValue();
@@ -516,7 +526,7 @@ public class WekaScoringData extends BaseStepData
         m_vals[i] = Instance.missingValue();
       }      
       } */
-    Instance newInst = new Instance(1.0, m_vals);
+    Instance newInst = new DenseInstance(1.0, m_vals);
     newInst.setDataset(header);
     return newInst;
   }
