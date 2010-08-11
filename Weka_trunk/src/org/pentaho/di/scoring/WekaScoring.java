@@ -243,6 +243,9 @@ public class WekaScoring extends BaseStep
     if (first) {
       first = false;
 
+      // make sure that all Weka packages have been loaded!
+      weka.core.WekaPackageManager.loadPackages(false);
+
       m_data.setOutputRowMeta(getInputRowMeta().clone());
       if (m_meta.getFileNameFromField()) {
         RowMetaInterface inputRowMeta = getInputRowMeta();

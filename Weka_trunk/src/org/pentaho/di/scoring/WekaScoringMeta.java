@@ -483,6 +483,9 @@ public class WekaScoringMeta
                       Map<String, Counter> counters)
     throws KettleXMLException {
 
+    // make sure that all Weka packages have been loaded!
+    weka.core.WekaPackageManager.loadPackages(false);
+
     int nrModels = 
       XMLHandler.countNodes(stepnode, XML_TAG);
 
@@ -617,6 +620,9 @@ public class WekaScoringMeta
                       List<DatabaseMeta> databases, 
                       Map<String, Counter> counters) 
     throws KettleException {
+
+    // make sure that all Weka packages have been loaded!
+    weka.core.WekaPackageManager.loadPackages(false);
     
     m_fileNameFromField = 
       rep.getStepAttributeBoolean(id_step, 0, "file_name_from_field");
