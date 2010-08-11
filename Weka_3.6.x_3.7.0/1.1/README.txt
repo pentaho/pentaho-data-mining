@@ -1,6 +1,6 @@
 =============================================================
                             README
-              Weka scoring plugin for Kettle 3.0
+              Weka scoring plugin for Kettle 3.x
 =============================================================
 
 The Weka Scoring plugin allows pre-built Weka classifiers and
