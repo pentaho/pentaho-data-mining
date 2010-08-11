@@ -10,7 +10,7 @@ score data. See docs/WekaScoring.pdf for more information.
 IMPORTANT:
 
 This plugin requires Weka to be available as a library. In order to
-compile the code, download the latest development (3.7.x) version of
+compile the code, download the latest development (>=3.7.2) version of
 Weka, unpack the archive and copy the "weka.jar" to libext. To deploy
 the plugin in Kettle, copy the contents of WekaScoringDeploy, along
 with weka.jar, to your Kettle plugins directory.
