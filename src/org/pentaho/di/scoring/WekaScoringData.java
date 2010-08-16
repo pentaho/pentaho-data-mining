@@ -123,8 +123,8 @@ public class WekaScoringData extends BaseStepData
       // we will use the mining schema as the instance structure
       header = ((PMMLModel)model).getMiningSchema().getMiningSchemaAsInstances();
     } else if (modelFile.getName().toLowerCase().endsWith(".xstreammodel")) {
-      log.logBasic("[WekaScoringData]",
-                     Messages.getString("WekaScoringData.Log.LoadXMLModel"));
+      log.logBasic("[WekaScoringData] " + 
+          Messages.getString("WekaScoringData.Log.LoadXMLModel"));
       //      System.err.println("Trying to load XML model...");
       if (XStream.isPresent()) {
         Vector v = (Vector) XStream.read(modelFile.getAbsolutePath());
