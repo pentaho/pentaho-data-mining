@@ -754,7 +754,7 @@ public class WekaScoringDialog extends BaseStepDialog
            dialog.setFilterExtensions(extensions);
            if (m_wSaveFilename.getText() != null) {
              dialog.setFileName(transMeta.
-                                environmentSubstitute(m_wFilename.
+                                environmentSubstitute(m_wSaveFilename.
                                                       getText()));
            }
            dialog.setFilterNames(filterNames);
