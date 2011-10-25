@@ -884,11 +884,21 @@ public class WekaScoringDialog extends BaseStepDialog
 
         for (int i = 0; i < header.numAttributes(); i++) {
           Attribute temp = header.attribute(i);
-          String attName = "("
+          String attName = "(";
+          if (temp.isNumeric()) {
+            attName += "numeric)";
+          } else if (temp.isNominal()) {
+            attName += "nominal)";
+          } else if (temp.isString()) {
+            attName += "string)";
+          }
+          attName += (" " + temp.name());
+          
+          /*String attName = "("
             + ((temp.isNumeric())
                ? "numeric)"
                : "nominal)") 
-            + " " + temp.name();
+            + " " + temp.name(); */
           attName = getFixedLengthString(attName, ' ', maxLength);
           attName +=  "\t--> ";
           result.append(attName);

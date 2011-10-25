@@ -240,7 +240,7 @@ public class WekaScoringData extends BaseStepData
             status = TYPE_MISMATCH;
           }
         } else if (tempField.isString()) {
-          if (temp.isNominal()) {
+          if (temp.isNominal() || temp.isString()) {
             ok = true;
             status = 0;
             // All we can assume is that this input field is ok.
@@ -428,6 +428,14 @@ public class WekaScoringData extends BaseStepData
               }
             }
             break;
+          case Attribute.STRING:
+          {
+            String s = tempField.getString(inputVal);
+            // Set the attribute in the header to contain just this string value
+            temp.setStringValue(s);
+            m_vals[i] = 0.0;
+            break;
+          }
           default:
             //            System.err.println("Missing - default " + i);
             m_vals[i] = Utils.missingValue();
