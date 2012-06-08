@@ -32,6 +32,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -264,6 +265,90 @@ public class WekaScoringData extends BaseStepData
       }
     }
     return mappingIndexes;
+  }
+  
+  /**
+   * Generates a batch of predictions (more specifically, 
+   * an array of output rows containing all input Kettle fields 
+   * plus new fields that hold the prediction(s)) for each 
+   * incoming Kettle row given a Weka model.
+   *
+   * @param inputMeta the meta data for the incoming rows
+   * @param outputMeta the meta data for the output rows
+   * @param inputRow the values of the incoming row
+   * @param meta meta data for this step
+   * @return a Kettle row containing all incoming fields
+   * along with new ones that hold the prediction(s)
+   * @exception Exception if an error occurs
+   */
+  public Object[][] generatePredictions(RowMetaInterface inputMeta, 
+      RowMetaInterface outputMeta, List<Object[]> inputRows, 
+      WekaScoringMeta meta) throws Exception {
+    
+    int [] mappingIndexes = meta.getMappingIndexes();
+    WekaScoringModel model = meta.getModel();
+    boolean outputProbs = meta.getOutputProbabilities();
+    boolean supervised = model.isSupervisedLearningModel();
+
+    Attribute classAtt = null;
+    if (supervised) {
+      classAtt = model.getHeader().classAttribute();
+    }
+    
+    Instances batch = new Instances(model.getHeader(), inputRows.size());
+    for (Object[] r : inputRows) {
+      Instance inst = constructInstance(inputMeta, r, mappingIndexes, model);
+      batch.add(inst);
+    }    
+    
+    double[][] preds = model.distributionsForInstances(batch);
+    
+    Object[][] result = new Object[preds.length][];
+    for (int i = 0; i < preds.length; i++) {
+      // First copy the input data to the new result...
+      Object[] resultRow = 
+        RowDataUtil.resizeArray(inputRows.get(i), outputMeta.size()); 
+      int index = inputMeta.size();
+      
+      double[] prediction = preds[i];
+      
+      if (prediction.length == 1 || !outputProbs) {
+        if (supervised) {
+          if (classAtt.isNumeric()) {
+            Double newVal = new Double(prediction[0]);
+            resultRow[index++] = newVal;
+          } else {
+            int maxProb = Utils.maxIndex(prediction);
+            if (prediction[maxProb] > 0) {
+              String newVal = classAtt.value(maxProb);
+              resultRow[index++] = newVal;
+            } else {
+              String newVal = "Unable to predict";
+              resultRow[index++] = newVal;
+            }
+          } 
+        } else {
+          int maxProb = Utils.maxIndex(prediction);
+          if (prediction[maxProb] > 0) {
+            Double newVal = new Double(maxProb);
+            resultRow[index++] = newVal;
+          } else {
+            String newVal = "Unable to assign cluster";
+            resultRow[index++] = newVal;
+          }
+        }
+      } else {
+        // output probability distribution
+        for (int j = 0; j < prediction.length;j++) {
+          Double newVal = new Double(prediction[j]);
+          resultRow[index++] = newVal;
+        }
+      }
+      
+      result[i] = resultRow;      
+    }
+    
+    return result;
   }
 
   /**

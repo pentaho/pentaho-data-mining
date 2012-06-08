@@ -20,6 +20,7 @@
     <dependency org="pentaho-kettle" name="kettle-db" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
     <dependency org="pentaho-kettle" name="kettle-ui-swt" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
     <dependency org="pentaho.weka" name="pdm-3.7-ce" rev="${dependency.weka.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="dm-commons" name="dm-commons" rev="${dependency.dm-commons.revision}" transitive="false" conf="default->default" changing="true" />
 
 <!--        <dependency org="commons-logging" name="commons-logging" rev="1.1" transitive="false"/> -->
     </dependencies>

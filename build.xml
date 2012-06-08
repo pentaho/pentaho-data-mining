@@ -107,6 +107,8 @@
 	  	    </copy>
             <copy file="${libext-ivy}/pdm-3.7-ce-${dependency.weka.revision}.jar"
                   tofile="${distrib}/weka.jar"/>
+            <copy file="${libext-ivy}/dm-commons-${dependency.dm-commons.revision}.jar"
+                  tofile="${distrib}/dm-commons.jar"/>
 	  </target>
 
 	  <!--

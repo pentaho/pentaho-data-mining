@@ -23,7 +23,9 @@
 package org.pentaho.di.scoring;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.pentaho.di.core.Const;
@@ -36,6 +38,7 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import weka.core.BatchPredictor;
 
 import weka.core.Instances;
 
@@ -75,6 +78,10 @@ public class WekaScoring extends BaseStep
   // model filename from the last row processed (if reading
   // model filenames from a row field
   private String m_lastRowModelFile = "";
+  
+  // size of the batches of rows to be scored if the model is a batch scorer
+  private int m_batchScoringSize = WekaScoringMeta.DEFAULT_BATCH_SCORING_SIZE;
+  private List<Object[]> m_batch;
 
   /**
    * Creates a new <code>WekaScoring</code> instance.
@@ -120,7 +127,7 @@ public class WekaScoring extends BaseStep
       return;
     }
     
-    String resolvedName =  m_transMeta.environmentSubstitute(modelFileName);
+    String resolvedName =  environmentSubstitute(modelFileName);
     
     if (resolvedName.equals(m_lastRowModelFile)) {
       // nothing to do, just return
@@ -140,7 +147,7 @@ public class WekaScoring extends BaseStep
     
     // load the model
     logDebug("Loading model using field value" + 
-        m_transMeta.environmentSubstitute(modelFileName));
+        environmentSubstitute(modelFileName));
     WekaScoringModel modelToUse = setModel(modelFileName);
 
     if (m_meta.getCacheLoadedModels()) {
@@ -149,7 +156,7 @@ public class WekaScoring extends BaseStep
   }
   
   private WekaScoringModel setModel(String modelFileName) throws KettleException {
-    String modName = m_transMeta.environmentSubstitute(modelFileName);
+    String modName = environmentSubstitute(modelFileName);
     File modelFile = null;
     if (modName.startsWith("file:")) {
       try {
@@ -174,7 +181,7 @@ public class WekaScoring extends BaseStep
       m_meta.setModel(model);
       
       if (m_meta.getFileNameFromField()) {
-        m_lastRowModelFile = m_transMeta.environmentSubstitute(modelFileName);
+        m_lastRowModelFile = environmentSubstitute(modelFileName);
       }
     } catch (Exception ex) {
       throw new KettleException("Problem de-serializing model "
@@ -202,12 +209,22 @@ public class WekaScoring extends BaseStep
 
     if (r == null) {
       
+      if (m_meta.getModel().isBatchPredictor() && 
+          !m_meta.getFileNameFromField() && m_batch.size() > 0) {
+        try {
+          outputBatchRows();
+        } catch (Exception ex) {
+          throw new KettleException("An error occurred while getting " +
+              "predictions for batch", ex);
+        }
+      }
+      
       // see if we have an incremental model that is to be saved somewhere.
       if (!m_meta.getFileNameFromField() && m_meta.getUpdateIncrementalModel()) {
         if (!Const.isEmpty(m_meta.getSavedModelFileName())) {
           // try and save that sucker...
           try {
-            String modName = m_transMeta.environmentSubstitute(m_meta.getSavedModelFileName());
+            String modName = environmentSubstitute(m_meta.getSavedModelFileName());
             File updatedModelFile = null;
             if (modName.startsWith("file:")) {
               try {
@@ -265,7 +282,7 @@ public class WekaScoring extends BaseStep
         
         if (m_meta.getCacheLoadedModels()) {
           m_modelCache = new HashMap<String, WekaScoringModel>();
-        }
+        }                        
         
         setModelFromField(r);
         logBasic("Sourcing model file names from input field " + 
@@ -299,6 +316,38 @@ public class WekaScoring extends BaseStep
       //      System.err.println("Output Format: \n"
       //                 + m_data.getOutputRowMeta().toStringMeta());
       
+      if (!Const.isEmpty(m_meta.getBatchScoringSize())) {
+        try {
+          String bss = environmentSubstitute(m_meta.getBatchScoringSize());
+          m_batchScoringSize = Integer.parseInt(bss);
+        } catch (NumberFormatException ex) {
+          String modelPreferred = 
+            environmentSubstitute(((BatchPredictor)m_meta.getModel().getModel()).getBatchSize());
+          
+          boolean sizeOk = false;
+          if (!Const.isEmpty(modelPreferred)) {
+            logBasic("Unable to parse batch scoring size - trying model preferred size: "
+              +  modelPreferred + " rows.");
+            
+            try {
+              m_batchScoringSize = Integer.parseInt(modelPreferred);
+              sizeOk = true;
+            } catch (NumberFormatException e) {              
+            }
+          } 
+
+          if (!sizeOk) {          
+            logBasic("Unable to parse batch scoring size - setting to " +
+                "default: " + WekaScoringMeta.DEFAULT_BATCH_SCORING_SIZE 
+                + " rows.");
+            m_batchScoringSize = WekaScoringMeta.DEFAULT_BATCH_SCORING_SIZE;
+          }                    
+        }
+      }
+      
+      if (m_meta.getModel().isBatchPredictor()) {
+        m_batch = new ArrayList<Object[]>();
+      }      
     } // end (if first)
 
     // Make prediction for row using model
@@ -306,16 +355,31 @@ public class WekaScoring extends BaseStep
       if (m_meta.getFileNameFromField()) {
         setModelFromField(r);
       }
-      Object [] outputRow = 
-        m_data.generatePrediction(getInputRowMeta(), 
-                                  m_data.getOutputRowMeta(),
-                                  r, 
-                                  m_meta);
-      putRow(m_data.getOutputRowMeta(), outputRow);
+
+      if (m_meta.getModel().isBatchPredictor() && !m_meta.getFileNameFromField()) {
+        try {
+          // add current row to batch
+          m_batch.add(r);
+
+          if (m_batch.size() == m_batchScoringSize) {
+            outputBatchRows();
+          }
+        } catch (Exception ex) {
+          throw new KettleException("An error occurred while getting " +
+          		"predictions for batch", ex);
+        }
+      } else {
+        Object [] outputRow = 
+          m_data.generatePrediction(getInputRowMeta(), 
+              m_data.getOutputRowMeta(),
+              r, 
+              m_meta);
+        putRow(m_data.getOutputRowMeta(), outputRow);
+      }
     } catch (Exception ex) {
       throw new KettleException("Unable to make prediction for "
                                 + "row #" + linesRead
-                                + " ( " + ex.getMessage() + ")"); 
+                                + " ( " + ex.getMessage() + ")", ex); 
     }
     
     if (log.isRowLevel()) { 
@@ -327,6 +391,25 @@ public class WekaScoring extends BaseStep
       logBasic("Linenr "+linesRead);
     }
     return true;
+  }
+  
+  protected void outputBatchRows() throws Exception {
+    // get predictions for the batch
+    Object[][] outputRows = 
+      m_data.generatePredictions(getInputRowMeta(), 
+          m_data.getOutputRowMeta(), m_batch, m_meta);
+    
+    if (log.isDetailed()) {
+      logDetailed("Predicting batch");
+    }
+    
+    // output the rows
+    for (Object[] row : outputRows) {
+      putRow(m_data.getOutputRowMeta(), row);
+    }
+    
+    // reset batch
+    m_batch.clear();
   }
 
   /**

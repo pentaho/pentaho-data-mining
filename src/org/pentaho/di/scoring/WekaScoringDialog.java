@@ -140,6 +140,8 @@ public class WekaScoringDialog extends BaseStepDialog
   // Combines text field with widget to insert environment variable
   // for saving incrementally updated models
   private TextVar m_wSaveFilename;
+  
+  private TextVar m_batchScoringBatchSizeText;
 
 
   // file extension stuff
@@ -475,6 +477,27 @@ public class WekaScoringDialog extends BaseStepDialog
     m_fdOutputProbs.top = new FormAttachment(m_wCacheModelsCheckBox, margin);
     m_fdOutputProbs.right = new FormAttachment(100, 0);
     m_wOutputProbs.setLayoutData(m_fdOutputProbs);
+    
+    // batch scoring size line
+    Label batchLab = new Label(wFileComp, SWT.RIGHT);
+    batchLab.setText("Batch scoring batch size");
+    props.setLook(batchLab);
+    FormData fdd = new FormData();
+    fdd.left = new FormAttachment(0, 0);
+    fdd.top = new FormAttachment(m_wOutputProbs, margin);
+    fdd.right = new FormAttachment(middle, -margin);
+    batchLab.setLayoutData(fdd);
+    
+    m_batchScoringBatchSizeText = new TextVar(transMeta, wFileComp, 
+        SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    props.setLook(m_batchScoringBatchSizeText);
+    m_batchScoringBatchSizeText.addModifyListener(lsMod);
+    fdd = new FormData();
+    fdd.left = new FormAttachment(middle, 0);
+    fdd.top = new FormAttachment(m_wOutputProbs, margin);
+    fdd.right = new FormAttachment(100, 0);
+    m_batchScoringBatchSizeText.setLayoutData(fdd);
+    m_batchScoringBatchSizeText.setEnabled(false);
     
     
     // Fields mapping tab
@@ -824,6 +847,7 @@ public class WekaScoringDialog extends BaseStepDialog
           m_currentMeta.setModel(tempM);
         }
 
+        checkAbilityToBatchScore(tempM);
         checkAbilityToProduceProbabilities(tempM);
         checkAbilityToUpdateModelIncrementally(tempM);
 
@@ -972,6 +996,10 @@ public class WekaScoringDialog extends BaseStepDialog
       }
     }
     
+    if (!Const.isEmpty(m_currentMeta.getBatchScoringSize())) {
+      m_batchScoringBatchSizeText.setText(m_currentMeta.getBatchScoringSize());
+    }
+    
     // Grab model if it is available (and we are not reading model file
     // names from a field in the incoming data
   //  if (!m_wAcceptFileNameFromFieldCheckBox.getSelection()) {
@@ -982,6 +1010,7 @@ public class WekaScoringDialog extends BaseStepDialog
 
         // Grab mappings if available
         mappingString(tempM);
+        checkAbilityToBatchScore(tempM);
         checkAbilityToProduceProbabilities(tempM);
         checkAbilityToUpdateModelIncrementally(tempM);
       } else {
@@ -989,6 +1018,32 @@ public class WekaScoringDialog extends BaseStepDialog
         loadModel();
       }
     //}
+  }
+  
+  private void checkAbilityToBatchScore(WekaScoringModel tempM) {
+    if (tempM.isBatchPredictor()) {
+      m_wUpdateModel.setSelection(false);
+      m_wUpdateModel.setEnabled(false);
+      // disable the save field and button
+      m_wbSaveFilename.setEnabled(false);
+      m_wSaveFilename.setEnabled(false);
+      // clear the text field
+      m_wSaveFilename.setText("");
+      
+      m_wAcceptFileNameFromFieldCheckBox.setSelection(false);
+      m_wAcceptFileNameFromFieldCheckBox.setEnabled(false);
+      m_wAcceptFileNameFromFieldText.setEnabled(false);
+      m_wAcceptFileNameFromFieldText.setText("");
+      m_batchScoringBatchSizeText.setEnabled(true);
+    } else {
+      m_wUpdateModel.setEnabled(true);
+      // disable the save field and button
+      m_wbSaveFilename.setEnabled(true);
+      m_wSaveFilename.setEnabled(true);
+      m_wAcceptFileNameFromFieldCheckBox.setEnabled(true);
+      m_wAcceptFileNameFromFieldText.setEnabled(true);
+      m_batchScoringBatchSizeText.setEnabled(false);
+    }
   }
 
   private void checkAbilityToUpdateModelIncrementally(WekaScoringModel tempM) {
@@ -1088,6 +1143,10 @@ public class WekaScoringDialog extends BaseStepDialog
         // make sure that save filename is empty
         m_currentMeta.setSavedModelFileName("");
       }
+    }
+    
+    if (!Const.isEmpty(m_batchScoringBatchSizeText.getText())) {
+      m_currentMeta.setBatchScoringSize(m_batchScoringBatchSizeText.getText());
     }
 
     if (!m_originalMeta.equals(m_currentMeta)) {

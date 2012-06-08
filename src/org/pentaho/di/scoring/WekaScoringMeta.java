@@ -110,9 +110,30 @@ public class WekaScoringMeta
 
   // used to map attribute indices to incoming field indices
   private int[] m_mappingIndexes;
+  
+  public static final int DEFAULT_BATCH_SCORING_SIZE = 100;
+  private String m_batchScoringSize = "";
 
   // logging
   //protected LogChannelInterface m_log;
+  
+  /**
+   * Set the batch size to use if the model is a batch scoring model
+   * 
+   * @param size the size of the batch to use
+   */
+  public void setBatchScoringSize(String size) {
+    m_batchScoringSize = size;
+  }
+  
+  /**
+   * Get the batch size to use if the model is a batch scoring model
+   * 
+   * @return the size of the batch to use
+   */
+  public String getBatchScoringSize() {
+    return m_batchScoringSize;
+  }
 
   /**
    * Creates a new <code>WekaScoringMeta</code> instance.
@@ -355,6 +376,11 @@ public class WekaScoringMeta
       }
     }
     
+    if (!Const.isEmpty(m_batchScoringSize)) {
+      retval.append(XMLHandler.addTagValue("batch_scoring_size", 
+          m_batchScoringSize));
+    }
+    
     retval.append(XMLHandler.addTagValue("cache_loaded_models", 
         m_cacheLoadedModels));
     
@@ -510,6 +536,9 @@ public class WekaScoringMeta
           XMLHandler.getTagValue(wekanode, "field_name_to_load_from");
       }
       
+      m_batchScoringSize = 
+        XMLHandler.getTagValue(wekanode, "batch_scoring_size");
+      
       temp = XMLHandler.getTagValue(wekanode, "cache_loaded_models");
       if (temp.equalsIgnoreCase("N")) {
         m_cacheLoadedModels = false;
@@ -629,6 +658,9 @@ public class WekaScoringMeta
     
     m_fileNameFromField = 
       rep.getStepAttributeBoolean(id_step, 0, "file_name_from_field");
+    
+    m_batchScoringSize = 
+      rep.getStepAttributeString(id_step, 0, "batch_scoring_size");
 
     if (m_fileNameFromField) {
       m_fieldNameToLoadModelFrom = 
@@ -743,6 +775,11 @@ public class WekaScoringMeta
     
     rep.saveStepAttribute(id_transformation, id_step, 0, 
         "cache_loaded_models", m_cacheLoadedModels);
+    
+    if (!Const.isEmpty(m_batchScoringSize)) {
+      rep.saveStepAttribute(id_transformation, id_step, 0, 
+          "batch_scoring_size", m_batchScoringSize);
+    }
     
     WekaScoringModel temp = (m_fileNameFromField)
       ? m_defaultModel
