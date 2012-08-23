@@ -1,4 +1,5 @@
-<project name="ArffOutputPlugin" default="default" basedir=".">
+<project name="ArffOutputPlugin" default="default" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+  <import file="build-res/subfloor.xml"/>
 
 	  <description>
 	      ArffOutputPlugin plugin build file
@@ -14,11 +15,12 @@
 	  <property name="src"        			location="src"/> 
 	  <property name="classes"        		location="classes"/> 
 	  <property name="lib"        			location="lib"/>
-	  <property name="distrib"        		location="distrib"/>
+          <property name="stage"                        location="stage/arff-output"/>
+          <property name="dist"                         location="dist"/>
 	  <property name="libext"     			location="libext"/>
 	  <property name="libswt"     			location="libswt"/>
-	  <property name="deploydir"     		location="ArffOutputDeploy"/>
-          <property name="java_version" value="1.5"/>
+          <property name="libext-ivy"                   location="libext-ivy"/>
+          <property name="java_version" value="1.6"/>
           <property name="debug" value="true"/>
 	
 	  <target name="init" description="create timestamp and directories">
@@ -27,7 +29,7 @@
 	    <tstamp/>
 	    <mkdir dir="${classes}"/>
 	    <mkdir dir="${lib}"/>
-	    <mkdir dir="${distrib}"/>
+	    <mkdir dir="${stage}/lib"/>
 	  </target>
 
 	  <!--
@@ -45,10 +47,11 @@
                    debug="${debug}">
 
 	    	<classpath id="cpath">
-				<fileset dir="${libext}" 		includes="*.jar"/>
-				<fileset dir="${libswt}" 		includes="*.jar"/>
-				<fileset dir="${libswt}/win32/" includes="*.jar"/>
-		  		</classpath>
+                  <fileset dir="${libext-ivy}"            includes="*.jar"/>
+		  <fileset dir="${libext}" 		includes="*.jar"/>
+		  <fileset dir="${libswt}" 		includes="*.jar"/>
+		  <fileset dir="${libswt}/win32/" includes="*.jar"/>
+		</classpath>
 	    </javac>
 	  </target>
 	
@@ -75,7 +78,7 @@
 	  <target name="arffoutput" depends="compile, copy" description="generate the arff output plugin library arffoutput.jar">
 	  	<echo>Generating the Kettle library arffoutput.jar ...</echo>
 	  	<jar 
-	    	jarfile="${lib}/arffoutput.jar" 
+	    	jarfile="${lib}/${ivy.artifact.id}-${project.revision}.jar" 
 	    	basedir="${classes}" 
 	    	includes="**/*"/>	 
 	  </target>
@@ -86,17 +89,19 @@
 	       ==========================
 	  -->
 
-	  <target name="distrib" depends="arffoutput" description="Create the distribution package..." >
-	  	<echo>Copying libraries to distrib directory...</echo>
-	    <copy todir="${distrib}">
-	    	<fileset 
-	    		dir="${lib}" 
-	    		includes="**/*.jar"/>
-	    	<fileset 
-	    		dir="${libext}" 
-	    		includes="**/weka.jar"/>
-	  	    </copy>
-	  </target>
+
+          <target name="stage" depends="arffoutput" description="Stage files" >
+                <echo>Staging jar and libraries.</echo>
+            <copy todir="${stage}">
+                <fileset 
+                        dir="${lib}" 
+                        includes="**/*.jar"/>
+                </copy>
+            <copy file="${libext-ivy}/pdm-3.6-ce-${dependency.weka.revision}.jar"
+                  todir="${stage}/lib"/>
+            <copy file="${libext-ivy}/dm-commons-${dependency.dm-commons.revision}.jar"
+                  todir="${stage}/lib"/>
+          </target>
 
 	  <!--
 	       ==========================
@@ -104,14 +109,11 @@
 	       ==========================
 	  -->
 
-	  <target name="deploy" depends="distrib" description="Deploy distribution..." >
-	  	<echo>deploying plugin...</echo>
-	    <copy todir="${deploydir}">
-	    	<fileset 
-	    		dir="${distrib}" 
-	    		includes="**/*.*"/>
-	  	    </copy>
-	  </target>
+          <target name="deploy" depends="stage" description="Deploy distribution..." >
+                <echo>Deploying plugin...</echo>
+            <zip destfile="${dist}/${ivy.artifact.id}-TRUNK-SNAPSHOT-deploy.zip" basedir="stage" includes="arff-output/** README.txt LICENSE*"/>
+            <zip destfile="${dist}/${ivy.artifact.id}-TRUNK-SNAPSHOT-src.zip" basedir="${src}"/>
+          </target>
 
 	<!--
 	       ==========================
@@ -129,6 +131,7 @@
 	  <target name="clean"  description="clean up generated files" >
 	    <delete dir="${classes}"/>
 	    <delete dir="${lib}"/>
+	    <delete dir="stage"/>
 	  </target>
 	
 </project>

@@ -38,6 +38,7 @@ import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.RowDataUtil; 
+import org.pentaho.dm.commons.ArffMeta;
 
 import weka.core.Utils;
 

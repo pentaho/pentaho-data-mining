@@ -67,6 +67,8 @@ import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
+import org.pentaho.di.i18n.BaseMessages;
+import org.pentaho.dm.commons.ArffMeta;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -196,7 +198,7 @@ public class ArffOutputDialog extends BaseStepDialog
     formLayout.marginHeight = Const.FORM_MARGIN;
 
     shell.setLayout(formLayout);
-    shell.setText(Messages.getString("ArffOutputDialog.Shell.Title"));
+    shell.setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Shell.Title"));
 
     int middle = props.getMiddlePct();
     int margin = Const.MARGIN;
@@ -204,7 +206,7 @@ public class ArffOutputDialog extends BaseStepDialog
     // Stepname line
     m_wlStepname = new Label(shell, SWT.RIGHT);
     m_wlStepname.
-      setText(Messages.getString("ArffOutputDialog.StepName.Label"));
+      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.StepName.Label"));
     props.setLook(m_wlStepname);
 
     m_fdlStepname = new FormData();
@@ -231,7 +233,7 @@ public class ArffOutputDialog extends BaseStepDialog
     // Start of the file tab
     m_wFileTab = new CTabItem(m_wTabFolder, SWT.NONE);
     m_wFileTab.
-      setText(Messages.getString("ArffOutputDialog.FileTab.TabTitle"));
+      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.FileTab.TabTitle"));
     
     Composite wFileComp = new Composite(m_wTabFolder, SWT.NONE);
     props.setLook(wFileComp);
@@ -244,7 +246,7 @@ public class ArffOutputDialog extends BaseStepDialog
     // Filename line
     m_wlFilename = new Label(wFileComp, SWT.RIGHT);
     m_wlFilename.
-      setText(Messages.getString("ArffOutputDialog.Filename.Label"));
+      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Filename.Label"));
     props.setLook(m_wlFilename);
     m_fdlFilename = new FormData();
     m_fdlFilename.left = new FormAttachment(0, 0);
@@ -255,7 +257,7 @@ public class ArffOutputDialog extends BaseStepDialog
     // file browse button
     m_wbFilename=new Button(wFileComp, SWT.PUSH| SWT.CENTER);
     props.setLook(m_wbFilename);
-    m_wbFilename.setText(Messages.getString("System.Button.Browse"));
+    m_wbFilename.setText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Button.Browse"));
     m_fdbFilename=new FormData();
     m_fdbFilename.right = new FormAttachment(100, 0);
     m_fdbFilename.top = new FormAttachment(0, 0);
@@ -282,7 +284,7 @@ public class ArffOutputDialog extends BaseStepDialog
     // Relation name line
     m_wlRelationName = new Label(wFileComp, SWT.RIGHT);
     m_wlRelationName.
-      setText(Messages.getString("ArffOutputDialog.RelationName.Label"));
+      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.RelationName.Label"));
     props.setLook(m_wlRelationName);
     m_fdlRelationName = new FormData();
     m_fdlRelationName.left = new FormAttachment(0, 0);
@@ -305,7 +307,7 @@ public class ArffOutputDialog extends BaseStepDialog
     // Content tab
     m_wContentTab = new CTabItem(m_wTabFolder, SWT.NONE);
     m_wContentTab.
-      setText(Messages.getString("ArffOutputDialog.ContentTab.TabTitle"));
+      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.ContentTab.TabTitle"));
     
     FormLayout contentLayout = new FormLayout();
     contentLayout.marginWidth  = 3;
@@ -318,7 +320,7 @@ public class ArffOutputDialog extends BaseStepDialog
     // Format line
     m_wlFormat = new Label(wContentComp, SWT.RIGHT);
     m_wlFormat.
-      setText(Messages.getString("ArffOutputDialog.Format.Label"));
+      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Format.Label"));
     props.setLook(m_wlFormat);
     m_fdlFormat = new FormData();
     m_fdlFormat.left = new FormAttachment(0, 0);
@@ -326,7 +328,7 @@ public class ArffOutputDialog extends BaseStepDialog
     m_fdlFormat.right = new FormAttachment(middle, -margin);
     m_wlFormat.setLayoutData(m_fdlFormat);
     m_wFormat = new CCombo(wContentComp, SWT.BORDER | SWT.READ_ONLY);
-    m_wFormat.setText(Messages.getString("ArffOutputDialog.Format.Label"));
+    m_wFormat.setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Format.Label"));
     props.setLook(m_wFormat);
     m_wFormat.add("DOS");
     m_wFormat.add("Unix");
@@ -341,7 +343,7 @@ public class ArffOutputDialog extends BaseStepDialog
     // Encoding line
     m_wlEncoding = new Label(wContentComp, SWT.RIGHT);
     m_wlEncoding.
-      setText(Messages.getString("ArffOutputDialog.Encoding.Label"));
+      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Encoding.Label"));
     props.setLook(m_wlEncoding);
     m_fdlEncoding = new FormData();
     m_fdlEncoding.left = new FormAttachment(0, 0);
@@ -386,7 +388,7 @@ public class ArffOutputDialog extends BaseStepDialog
     // Fields tab
     m_wFieldsTab = new CTabItem(m_wTabFolder, SWT.NONE);
     m_wFieldsTab.
-      setText(Messages.getString("ArffOutputDialog.FieldsTab.TabTitle"));
+      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.FieldsTab.TabTitle"));
     
     FormLayout fieldsLayout = new FormLayout();
     fieldsLayout.marginWidth  = 3;
@@ -398,7 +400,7 @@ public class ArffOutputDialog extends BaseStepDialog
     
     m_wlFields = new Label(wFieldsComp, SWT.NONE);
     m_wlFields.
-      setText(Messages.getString("ArffOutputDialog.FieldsTab.Label"));
+      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.FieldsTab.Label"));
     props.setLook(m_wlFields);
     m_fdlFields = new FormData();
     m_fdlFields.left = new FormAttachment(0, 0);
@@ -415,13 +417,13 @@ public class ArffOutputDialog extends BaseStepDialog
       : 1;   */
     
     m_colinf = new ColumnInfo[] {
-      new ColumnInfo(Messages.getString(
+      new ColumnInfo(BaseMessages.getString(ArffOutputMeta.PKG,
             "ArffOutputDialog.OutputFieldsColumn.Name"),
                      ColumnInfo.COLUMN_TYPE_TEXT, false),
-        new ColumnInfo(Messages.getString(
+        new ColumnInfo(BaseMessages.getString(ArffOutputMeta.PKG,
             "ArffOutputDialog.OutputFieldsColumn.KettleType"),
              ColumnInfo.COLUMN_TYPE_TEXT, false),
-        new ColumnInfo(Messages.getString(
+        new ColumnInfo(BaseMessages.getString(ArffOutputMeta.PKG,
             "ArffOutputDialog.OutputFieldsColumn.ArffType"),
              ColumnInfo.COLUMN_TYPE_TEXT, false)
     };
@@ -442,8 +444,8 @@ public class ArffOutputDialog extends BaseStepDialog
     m_wFields.setLayoutData(m_fdFields);
 
     wGet = new Button(wFieldsComp, SWT.PUSH);
-    wGet.setText(Messages.getString("System.Button.GetFields"));
-    wGet.setToolTipText(Messages.getString("System.Tooltip.GetFields"));
+    wGet.setText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Button.GetFields"));
+    wGet.setToolTipText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Tooltip.GetFields"));
 
     // setButtonPositions(new Button[] { wGet }, margin, null);
     FormData temp = new FormData();
@@ -525,9 +527,9 @@ public class ArffOutputDialog extends BaseStepDialog
 
     // Some buttons
     wOK = new Button(shell, SWT.PUSH);
-    wOK.setText(Messages.getString("System.Button.OK"));
+    wOK.setText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Button.OK"));
     wCancel = new Button(shell, SWT.PUSH);
-    wCancel.setText(Messages.getString("System.Button.Cancel"));
+    wCancel.setText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Button.Cancel"));
 
     setButtonPositions(new Button[] { wOK, wCancel }, margin, null);
 
@@ -564,7 +566,7 @@ public class ArffOutputDialog extends BaseStepDialog
 
            }
            dialog.setFilterNames(new String[] {
-               Messages.getString("System.FileType.AllFiles")});
+               BaseMessages.getString(ArffOutputMeta.PKG, "System.FileType.AllFiles")});
 
            if (dialog.open() != null) {
 
@@ -720,8 +722,8 @@ public class ArffOutputDialog extends BaseStepDialog
         return m_currentMeta.getOutputFields();
       } catch (KettleException ex) {
         log.logError(toString(),
-                     Messages.
-                     getString("ArffOutputDialog.Log.UnableToFindInput"));
+            BaseMessages.
+                     getString(ArffOutputMeta.PKG, "ArffOutputDialog.Log.UnableToFindInput"));
       }
     }
     return null;
@@ -746,8 +748,8 @@ public class ArffOutputDialog extends BaseStepDialog
           }
         }
       } catch (KettleException ex) {
-        log.logError(toString(), Messages.
-            getString("ArffOutputDialog.Log.UnableToFindInput"));
+        log.logError(toString(), BaseMessages.
+            getString(ArffOutputMeta.PKG, "ArffOutputDialog.Log.UnableToFindInput"));
       }
     }
   }

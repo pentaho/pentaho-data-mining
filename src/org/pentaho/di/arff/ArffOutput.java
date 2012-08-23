@@ -46,6 +46,7 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.dm.commons.ArffMeta;
 
 /**
  * Outputs Kettle rows to a file in WEKA's ARFF (Attribute

@@ -31,6 +31,7 @@ import org.pentaho.di.core.CheckResult;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Counter;
+import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
@@ -50,6 +51,8 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.dm.commons.ArffMeta;
+import org.pentaho.di.core.annotations.Step;
 import org.w3c.dom.Node;
 
 /**
@@ -58,9 +61,12 @@ import org.w3c.dom.Node;
  * @author Mark Hall (mhall{[at]}pentaho.org)
  * @version 1.0
  */
+@Step(id = "ArffOutput", image = "AO.png", name = "Arff Output", description = "Writes data in ARFF format to a file", categoryDescription = "Data Mining")
 public class ArffOutputMeta 
   extends BaseStepMeta
   implements StepMetaInterface {
+  
+  protected static Class<?> PKG = ArffOutputMeta.class;
 
   // Meta data for the output fields
   protected ArffMeta[] m_outputFields;
@@ -545,28 +551,15 @@ public class ArffOutputMeta
     
     return nl;
   }
-
-  /**
-   * Get the UI for this step.
-   *
-   * @param shell a <code>Shell</code> value
-   * @param meta a <code>StepMetaInterface</code> value
-   * @param transMeta a <code>TransMeta</code> value
-   * @param name a <code>String</code> value
-   * @return a <code>StepDialogInterface</code> value
+  
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.pentaho.di.trans.step.BaseStepMeta#getDialogClassName()
    */
-  public StepDialogInterface getDialog(Shell shell, 
-                                       StepMetaInterface meta,
-                                       TransMeta transMeta, 
-                                       String name) {
-
-    // Not sure how this works in Kettle. Guessing that
-    // reflection is used to look for this method (as it
-    // is not defined in BaseStepMeta or StepMetaInterface. If
-    // this method is ommitted, Kettle seems to look for a UI
-    // class in org.pentaho.di.ui.
-
-    return new ArffOutputDialog(shell, meta, transMeta, name);
+  @Override
+  public String getDialogClassName() {
+    return "org.pentaho.di.arff.ArffOutputDialog";
   }
 
   /**
