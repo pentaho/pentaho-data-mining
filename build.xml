@@ -17,7 +17,6 @@
 	  <property name="lib"        			location="lib"/>
           <property name="stage"                        location="stage/arff-output"/>
           <property name="dist"                         location="dist"/>
-	  <property name="libext"     			location="libext"/>
 	  <property name="libswt"     			location="libswt"/>
           <property name="libext-ivy"                   location="libext-ivy"/>
           <property name="java_version" value="1.6"/>
@@ -48,7 +47,6 @@
 
 	    	<classpath id="cpath">
                   <fileset dir="${libext-ivy}"            includes="*.jar"/>
-		  <fileset dir="${libext}" 		includes="*.jar"/>
 		  <fileset dir="${libswt}" 		includes="*.jar"/>
 		  <fileset dir="${libswt}/win32/" includes="*.jar"/>
 		</classpath>
