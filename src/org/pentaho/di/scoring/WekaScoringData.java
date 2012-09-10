@@ -290,7 +290,8 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
 
     Instances batch = new Instances(model.getHeader(), inputRows.size());
     for (Object[] r : inputRows) {
-      Instance inst = constructInstance(inputMeta, r, mappingIndexes, model);
+      Instance inst = constructInstance(inputMeta, r, mappingIndexes, model,
+          true);
       batch.add(inst);
     }
 
@@ -374,7 +375,7 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
     // need to construct an Instance to represent this
     // input row
     Instance toScore = constructInstance(inputMeta, inputRow, mappingIndexes,
-        model);
+        model, false);
     double[] prediction = model.distributionForInstance(toScore);
 
     // Update the model??
@@ -437,12 +438,13 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
    * @return an <code>Instance</code> value
    */
   private Instance constructInstance(RowMetaInterface inputMeta,
-      Object[] inputRow, int[] mappingIndexes, WekaScoringModel model) {
+      Object[] inputRow, int[] mappingIndexes, WekaScoringModel model,
+      boolean freshVector) {
 
     Instances header = model.getHeader();
 
-    // Re-use this array to avoid an object creation
-    if (m_vals == null /* || m_vals.length != header.numAttributes() */) {
+    // Re-use this array (unless told otherwise) to avoid an object creation
+    if (m_vals == null || freshVector) {
       m_vals = new double[header.numAttributes()];
     }
 
