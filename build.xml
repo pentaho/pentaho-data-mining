@@ -28,6 +28,7 @@
 	    <tstamp/>
 	    <mkdir dir="${classes}"/>
 	    <mkdir dir="${lib}"/>
+	    <mkdir dir="${dist}"/>
 	    <mkdir dir="${stage}/lib"/>
 	  </target>
 
