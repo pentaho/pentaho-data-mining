@@ -25,6 +25,7 @@ package org.pentaho.di.scoring;
 import java.io.Serializable;
 
 import org.pentaho.di.core.logging.LogChannelInterface;
+import org.pentaho.dm.commons.LogAdapter;
 
 import weka.core.Instances;
 import weka.core.Instance;

@@ -15,14 +15,12 @@
 	  <property name="src"        			location="src"/> 
 	  <property name="classes"        		location="classes"/> 
 	  <property name="lib"        			location="lib"/>
-	  <property name="distrib"        		location="distrib"/>
           <property name="doc"                          location="docs"/>
-	  <property name="libext"     			location="libext"/>
           <property name="dist"                         location="dist"/>
+          <property name="stage"                        location="stage/weka-scoring"/>
           <property name="libext-ivy"                   location="libext-ivy"/>
 	  <property name="libswt"     			location="libswt"/>
-	  <property name="deploydir"     		location="WekaScoringDeploy"/>
-          <property name="java_version" value="1.5"/>
+          <property name="java_version" value="1.6"/>
           <property name="debug" value="true"/>
 	
 	  <target name="init" description="create timestamp and directories">
@@ -31,8 +29,8 @@
 	    <tstamp/>
 	    <mkdir dir="${classes}"/>
 	    <mkdir dir="${lib}"/>
-	    <mkdir dir="${distrib}"/>
             <mkdir dir="${dist}"/>
+            <mkdir dir="${stage}/lib"/>
 	  </target>
 
 	  <!--
@@ -51,7 +49,6 @@
 
 	    	<classpath id="cpath">
 				<fileset dir="${libext-ivy}" 		includes="*.jar"/>
-				<fileset dir="${libext}" 		includes="*.jar"/>
 				<fileset dir="${libswt}" 		includes="*.jar"/>
 				<fileset dir="${libswt}/win32/" includes="*.jar"/>
 		  		</classpath>
@@ -81,7 +78,7 @@
 	  <target name="scoring" depends="compile, copy" description="generate the weka scoring plugin library scoring.jar">
 	  	<echo>Generating the Kettle library scoring.jar ...</echo>
 	  	<jar 
-	    	jarfile="${lib}/scoring.jar" 
+	    	jarfile="${lib}/${ivy.artifact.id}-${project.revision}.jar" 
 	    	basedir="${classes}" 
 	    	includes="**/*"/>	 
 	  </target>
@@ -92,21 +89,21 @@
 	       ==========================
 	  -->
 
-	  <target name="distrib" depends="scoring" description="Create the distribution package..." >
-	  	<echo>Copying libraries to distrib directory...</echo>
-	    <copy todir="${distrib}">
+	  <target name="stage" depends="scoring" description="Stage files" >
+	  	<echo>Staging jar and libraries.</echo>
+	    <copy todir="${stage}">
 	    	<fileset 
 	    		dir="${lib}" 
 	    		includes="**/*.jar"/>
-	    	<fileset 
-	    		dir="${libext}" 
-	    		includes="**/xstream*.jar"/>
-	    	<fileset 
-	    		dir="${libext}" 
-	    		includes="**/xpp3*.jar"/>
-	  	    </copy>
+                </copy>
             <copy file="${libext-ivy}/pdm-3.6-ce-${dependency.weka.revision}.jar"
-                  tofile="${distrib}/weka.jar"/>
+                  todir="${stage}/lib"/>
+            <copy file="${libext-ivy}/dm-commons-${dependency.dm-commons.revision}.jar"
+                  todir="${stage}/lib"/>
+            <copy file="${libext-ivy}/xstream-${dependency.xstream.revision}.jar"
+                  todir="${stage}/lib"/>
+            <copy file="${libext-ivy}/xpp3_min-${dependency.xpp3-min.revision}.jar"
+                  todir="${stage}/lib"/>
 	  </target>
 
 	  <!--
@@ -115,14 +112,9 @@
 	       ==========================
 	  -->
 
-	  <target name="deploy" depends="distrib" description="Deploy distribution..." >
-	  	<echo>deploying plugin...</echo>
-	    <copy todir="${deploydir}">
-	    	<fileset 
-	    		dir="${distrib}" 
-	    		includes="**/*.*"/>
-	  	    </copy>
-            <zip destfile="${dist}/${ivy.artifact.id}-TRUNK-SNAPSHOT-deploy.zip" basedir="." includes="WekaScoringDeploy/** README.txt LICENSE*"/>
+	  <target name="deploy" depends="stage" description="Deploy distribution..." >
+	  	<echo>Deploying plugin...</echo>
+            <zip destfile="${dist}/${ivy.artifact.id}-TRUNK-SNAPSHOT-deploy.zip" basedir="stage" includes="weka-scoring/** README.txt LICENSE*"/>
             <zip destfile="${dist}/${ivy.artifact.id}-TRUNK-SNAPSHOT-src.zip" basedir="${src}"/>
             <zip destfile="${dist}/docsAndData-TRUNK-SNAPSHOT.zip" basedir="." includes="docs/**/*"/>
 	  </target>
@@ -144,11 +136,6 @@
 	    <delete dir="${classes}"/>
 	    <delete dir="${lib}"/>
             <delete dir="${dist}"/>
-            <delete dir="${deploydir}"/>
-            <delete>
-              <fileset
-                 dir="${distrib}"
-                 includes="**/*.jar"/>
-            </delete>
+            <delete dir="stage"/>
 	  </target>
 </project>

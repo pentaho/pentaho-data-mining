@@ -29,6 +29,7 @@ import java.io.*;
 import org.eclipse.swt.widgets.Shell;
 
 import org.pentaho.di.core.CheckResult;
+import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Counter;
@@ -65,6 +66,7 @@ import weka.core.SerializedObject;
  * @author Mark Hall (mhall{[at]}pentaho.org)
  * @version 1.0
  */
+@Step(id = "WekaScoring", image = "WS.png", name = "Weka Scoring", description = "Appends predictions from a pre-built Weka model", categoryDescription = "Data Mining")
 public class WekaScoringMeta 
   extends BaseStepMeta
   implements StepMetaInterface {
