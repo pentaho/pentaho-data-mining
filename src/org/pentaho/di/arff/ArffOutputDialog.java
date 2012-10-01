@@ -22,70 +22,63 @@
 
 package org.pentaho.di.arff;
 
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.graphics.Point; 
 import org.eclipse.swt.custom.CCombo;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.events.FocusListener;
-import org.eclipse.swt.events.FocusEvent;
-import org.eclipse.swt.graphics.Cursor;
-import org.eclipse.swt.custom.CTabFolder;
-import org.eclipse.swt.custom.CTabItem;
-import org.eclipse.swt.widgets.Composite;
-
 import org.pentaho.di.core.Const;
+import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMeta;
-
-import org.pentaho.di.core.Props;
-import org.pentaho.di.ui.core.dialog.EnterSelectionDialog;
+import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
-import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
-import org.pentaho.di.i18n.BaseMessages;
+import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.dm.commons.ArffMeta;
-
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.io.File;
 
 /**
  * The UI class for the ArffOutput step
- *
+ * 
  * @author Mark Hall (mhall{[at]}pentaho.org)
  * @version 1.0
  */
-public class ArffOutputDialog extends BaseStepDialog
-  implements StepDialogInterface {
+public class ArffOutputDialog extends BaseStepDialog implements
+    StepDialogInterface {
 
   // Step name stuff
   private Label m_wlStepname;
@@ -130,7 +123,7 @@ public class ArffOutputDialog extends BaseStepDialog
   private FormData m_fdlEncoding, m_fdEncoding;
 
   // Compression, to do?
-  
+
   // Fields stuff
   // Fields table stuff
   private Label m_wlFields;
@@ -139,7 +132,10 @@ public class ArffOutputDialog extends BaseStepDialog
   private FormData m_fdFields;
 
   private ColumnInfo[] m_colinf;
-  
+
+  // sparse output
+  private Button m_sparseOutputCheckBox;
+
   // weight field stuff
   private Label m_weightFieldCheckBoxLab;
   private Button m_weightFieldCheckBox;
@@ -149,47 +145,42 @@ public class ArffOutputDialog extends BaseStepDialog
   private boolean m_gotEncodings = false;
 
   /**
-   * meta data for the step. A copy is made so
-   * that changes, in terms of choices made by the
-   * user, can be detected.
+   * meta data for the step. A copy is made so that changes, in terms of choices
+   * made by the user, can be detected.
    */
-  private ArffOutputMeta m_currentMeta;
-  private ArffOutputMeta m_originalMeta;
+  private final ArffOutputMeta m_currentMeta;
+  private final ArffOutputMeta m_originalMeta;
 
-  public ArffOutputDialog(Shell parent, 
-                          Object in, 
-                          TransMeta tr, 
-                          String sname) {
+  public ArffOutputDialog(Shell parent, Object in, TransMeta tr, String sname) {
 
     super(parent, (BaseStepMeta) in, tr, sname);
 
-    // The order here is important... 
-    //m_currentMeta is looked at for changes
+    // The order here is important...
+    // m_currentMeta is looked at for changes
     m_currentMeta = (ArffOutputMeta) in;
     m_originalMeta = (ArffOutputMeta) m_currentMeta.clone();
   }
 
   /**
    * Open the dialog
-   *
+   * 
    * @return the step name
    */
   public String open() {
     Shell parent = getParent();
     Display display = parent.getDisplay();
 
-    shell = 
-      new Shell(parent, SWT.DIALOG_TRIM | SWT.RESIZE | SWT.MIN | SWT.MAX);
+    shell = new Shell(parent, SWT.DIALOG_TRIM | SWT.RESIZE | SWT.MIN | SWT.MAX);
 
     props.setLook(shell);
     setShellImage(shell, m_currentMeta);
 
     // used to listen to a text field (m_wStepname)
     ModifyListener lsMod = new ModifyListener() {
-        public void modifyText(ModifyEvent e) {
-          m_currentMeta.setChanged();
-        }
-      };
+      public void modifyText(ModifyEvent e) {
+        m_currentMeta.setChanged();
+      }
+    };
 
     changed = m_currentMeta.hasChanged();
 
@@ -198,15 +189,16 @@ public class ArffOutputDialog extends BaseStepDialog
     formLayout.marginHeight = Const.FORM_MARGIN;
 
     shell.setLayout(formLayout);
-    shell.setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Shell.Title"));
+    shell.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.Shell.Title"));
 
     int middle = props.getMiddlePct();
     int margin = Const.MARGIN;
 
     // Stepname line
     m_wlStepname = new Label(shell, SWT.RIGHT);
-    m_wlStepname.
-      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.StepName.Label"));
+    m_wlStepname.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.StepName.Label"));
     props.setLook(m_wlStepname);
 
     m_fdlStepname = new FormData();
@@ -218,35 +210,35 @@ public class ArffOutputDialog extends BaseStepDialog
     m_wStepname.setText(stepname);
     props.setLook(m_wStepname);
     m_wStepname.addModifyListener(lsMod);
-    
+
     // format the text field
     m_fdStepname = new FormData();
     m_fdStepname.left = new FormAttachment(middle, 0);
     m_fdStepname.top = new FormAttachment(0, margin);
     m_fdStepname.right = new FormAttachment(100, 0);
     m_wStepname.setLayoutData(m_fdStepname);
-    
+
     m_wTabFolder = new CTabFolder(shell, SWT.BORDER);
     props.setLook(m_wTabFolder, Props.WIDGET_STYLE_TAB);
     m_wTabFolder.setSimple(false);
 
     // Start of the file tab
     m_wFileTab = new CTabItem(m_wTabFolder, SWT.NONE);
-    m_wFileTab.
-      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.FileTab.TabTitle"));
-    
+    m_wFileTab.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.FileTab.TabTitle"));
+
     Composite wFileComp = new Composite(m_wTabFolder, SWT.NONE);
     props.setLook(wFileComp);
-    
+
     FormLayout fileLayout = new FormLayout();
-    fileLayout.marginWidth  = 3;
+    fileLayout.marginWidth = 3;
     fileLayout.marginHeight = 3;
     wFileComp.setLayout(fileLayout);
 
     // Filename line
     m_wlFilename = new Label(wFileComp, SWT.RIGHT);
-    m_wlFilename.
-      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Filename.Label"));
+    m_wlFilename.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.Filename.Label"));
     props.setLook(m_wlFilename);
     m_fdlFilename = new FormData();
     m_fdlFilename.left = new FormAttachment(0, 0);
@@ -255,20 +247,21 @@ public class ArffOutputDialog extends BaseStepDialog
     m_wlFilename.setLayoutData(m_fdlFilename);
 
     // file browse button
-    m_wbFilename=new Button(wFileComp, SWT.PUSH| SWT.CENTER);
+    m_wbFilename = new Button(wFileComp, SWT.PUSH | SWT.CENTER);
     props.setLook(m_wbFilename);
-    m_wbFilename.setText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Button.Browse"));
-    m_fdbFilename=new FormData();
+    m_wbFilename.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "System.Button.Browse"));
+    m_fdbFilename = new FormData();
     m_fdbFilename.right = new FormAttachment(100, 0);
     m_fdbFilename.top = new FormAttachment(0, 0);
     m_wbFilename.setLayoutData(m_fdbFilename);
 
     // combined text field and env variable widget
-    m_wFilename = new TextVar(transMeta, wFileComp, 
-                              SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    m_wFilename = new TextVar(transMeta, wFileComp, SWT.SINGLE | SWT.LEFT
+        | SWT.BORDER);
     props.setLook(m_wFilename);
     m_wFilename.addModifyListener(lsMod);
-    m_fdFilename=new FormData();
+    m_fdFilename = new FormData();
     m_fdFilename.left = new FormAttachment(middle, 0);
     m_fdFilename.top = new FormAttachment(0, margin);
     m_fdFilename.right = new FormAttachment(m_wbFilename, -margin);
@@ -279,12 +272,12 @@ public class ArffOutputDialog extends BaseStepDialog
     m_fdFileComp.top = new FormAttachment(0, 0);
     m_fdFileComp.right = new FormAttachment(100, 0);
     m_fdFileComp.bottom = new FormAttachment(100, 0);
-    wFileComp.setLayoutData(m_fdFileComp);    
-        
+    wFileComp.setLayoutData(m_fdFileComp);
+
     // Relation name line
     m_wlRelationName = new Label(wFileComp, SWT.RIGHT);
-    m_wlRelationName.
-      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.RelationName.Label"));
+    m_wlRelationName.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.RelationName.Label"));
     props.setLook(m_wlRelationName);
     m_fdlRelationName = new FormData();
     m_fdlRelationName.left = new FormAttachment(0, 0);
@@ -306,21 +299,21 @@ public class ArffOutputDialog extends BaseStepDialog
 
     // Content tab
     m_wContentTab = new CTabItem(m_wTabFolder, SWT.NONE);
-    m_wContentTab.
-      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.ContentTab.TabTitle"));
-    
+    m_wContentTab.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.ContentTab.TabTitle"));
+
     FormLayout contentLayout = new FormLayout();
-    contentLayout.marginWidth  = 3;
+    contentLayout.marginWidth = 3;
     contentLayout.marginHeight = 3;
-    
+
     Composite wContentComp = new Composite(m_wTabFolder, SWT.NONE);
     props.setLook(wContentComp);
     wContentComp.setLayout(contentLayout);
 
     // Format line
     m_wlFormat = new Label(wContentComp, SWT.RIGHT);
-    m_wlFormat.
-      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Format.Label"));
+    m_wlFormat.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.Format.Label"));
     props.setLook(m_wlFormat);
     m_fdlFormat = new FormData();
     m_fdlFormat.left = new FormAttachment(0, 0);
@@ -328,7 +321,8 @@ public class ArffOutputDialog extends BaseStepDialog
     m_fdlFormat.right = new FormAttachment(middle, -margin);
     m_wlFormat.setLayoutData(m_fdlFormat);
     m_wFormat = new CCombo(wContentComp, SWT.BORDER | SWT.READ_ONLY);
-    m_wFormat.setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Format.Label"));
+    m_wFormat.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.Format.Label"));
     props.setLook(m_wFormat);
     m_wFormat.add("DOS");
     m_wFormat.add("Unix");
@@ -342,8 +336,8 @@ public class ArffOutputDialog extends BaseStepDialog
 
     // Encoding line
     m_wlEncoding = new Label(wContentComp, SWT.RIGHT);
-    m_wlEncoding.
-      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.Encoding.Label"));
+    m_wlEncoding.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.Encoding.Label"));
     props.setLook(m_wlEncoding);
     m_fdlEncoding = new FormData();
     m_fdlEncoding.left = new FormAttachment(0, 0);
@@ -352,8 +346,9 @@ public class ArffOutputDialog extends BaseStepDialog
     m_wlEncoding.setLayoutData(m_fdlEncoding);
     m_wEncoding = new CCombo(wContentComp, SWT.BORDER | SWT.READ_ONLY);
     m_wEncoding.setEditable(true);
-    /*    m_wEncoding.setText(Messages.
-          getString("")); */
+    /*
+     * m_wEncoding.setText(Messages. getString(""));
+     */
     props.setLook(m_wEncoding);
     m_wEncoding.addModifyListener(lsMod);
     m_fdEncoding = new FormData();
@@ -362,17 +357,17 @@ public class ArffOutputDialog extends BaseStepDialog
     m_fdEncoding.right = new FormAttachment(100, 0);
     m_wEncoding.setLayoutData(m_fdEncoding);
     m_wEncoding.addFocusListener(new FocusListener() {
-        public void focusLost(FocusEvent e) {
-        }
+      public void focusLost(FocusEvent e) {
+      }
 
-        public void focusGained(FocusEvent e) {
-          Cursor busy = new Cursor(shell.getDisplay(), SWT.CURSOR_WAIT);
-          shell.setCursor(busy);
-          setEncodings();
-          shell.setCursor(null);
-          busy.dispose();
-        }
-      });
+      public void focusGained(FocusEvent e) {
+        Cursor busy = new Cursor(shell.getDisplay(), SWT.CURSOR_WAIT);
+        shell.setCursor(busy);
+        setEncodings();
+        shell.setCursor(null);
+        busy.dispose();
+      }
+    });
 
     // Compression stuff?
 
@@ -381,60 +376,58 @@ public class ArffOutputDialog extends BaseStepDialog
     m_fdContentComp.top = new FormAttachment(0, 0);
     m_fdContentComp.right = new FormAttachment(100, 0);
     m_fdContentComp.bottom = new FormAttachment(100, 0);
-    wContentComp.setLayoutData(m_fdContentComp);    
+    wContentComp.setLayoutData(m_fdContentComp);
     wContentComp.layout();
     m_wContentTab.setControl(wContentComp);
 
     // Fields tab
     m_wFieldsTab = new CTabItem(m_wTabFolder, SWT.NONE);
-    m_wFieldsTab.
-      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.FieldsTab.TabTitle"));
-    
+    m_wFieldsTab.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.FieldsTab.TabTitle"));
+
     FormLayout fieldsLayout = new FormLayout();
-    fieldsLayout.marginWidth  = 3;
+    fieldsLayout.marginWidth = 3;
     fieldsLayout.marginHeight = 3;
-    
+
     Composite wFieldsComp = new Composite(m_wTabFolder, SWT.NONE);
     props.setLook(wFieldsComp);
     wFieldsComp.setLayout(fieldsLayout);
-    
+
     m_wlFields = new Label(wFieldsComp, SWT.NONE);
-    m_wlFields.
-      setText(BaseMessages.getString(ArffOutputMeta.PKG, "ArffOutputDialog.FieldsTab.Label"));
+    m_wlFields.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "ArffOutputDialog.FieldsTab.Label"));
     props.setLook(m_wlFields);
     m_fdlFields = new FormData();
     m_fdlFields.left = new FormAttachment(0, 0);
     m_fdlFields.top = new FormAttachment(0, margin);
     m_wlFields.setLayoutData(m_fdlFields);
 
-    /* if (m_currentMeta.getOutputFields().length == 0) {
-      setupArffMetas();
-      } */
-
     final int fieldsRows = 5;
-      /*      (m_currentMeta.getOutputFields() != null)
-      ? m_currentMeta.getOutputFields().length + 1 
-      : 1;   */
-    
+
     m_colinf = new ColumnInfo[] {
-      new ColumnInfo(BaseMessages.getString(ArffOutputMeta.PKG,
+        new ColumnInfo(BaseMessages.getString(ArffOutputMeta.PKG,
             "ArffOutputDialog.OutputFieldsColumn.Name"),
-                     ColumnInfo.COLUMN_TYPE_TEXT, false),
+            ColumnInfo.COLUMN_TYPE_TEXT, false),
         new ColumnInfo(BaseMessages.getString(ArffOutputMeta.PKG,
             "ArffOutputDialog.OutputFieldsColumn.KettleType"),
-             ColumnInfo.COLUMN_TYPE_TEXT, false),
+            ColumnInfo.COLUMN_TYPE_TEXT, false),
         new ColumnInfo(BaseMessages.getString(ArffOutputMeta.PKG,
             "ArffOutputDialog.OutputFieldsColumn.ArffType"),
-             ColumnInfo.COLUMN_TYPE_TEXT, false)
-    };
+            ColumnInfo.COLUMN_TYPE_CCOMBO, false),
+        new ColumnInfo(BaseMessages.getString(ArffOutputMeta.PKG,
+            "ArffOutputDialog.OutputFieldsColumn.NomValsOrDateFormat"),
+            ColumnInfo.COLUMN_TYPE_TEXT, false) };
+
     m_colinf[0].setReadOnly(true);
     m_colinf[1].setReadOnly(true);
-    m_colinf[2].setReadOnly(true);
+    m_colinf[2].setReadOnly(false);
+    m_colinf[3].setReadOnly(false);
 
-    m_wFields = new TableView(transMeta, wFieldsComp,
-                              SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI, 
-                              m_colinf, fieldsRows, lsMod,
-                              props);
+    m_colinf[2].setComboValues(new String[] { "Numeric", "Nominal", "Date",
+        "String" });
+
+    m_wFields = new TableView(transMeta, wFieldsComp, SWT.BORDER
+        | SWT.FULL_SELECTION | SWT.MULTI, m_colinf, fieldsRows, lsMod, props);
 
     m_fdFields = new FormData();
     m_fdFields.left = new FormAttachment(0, 0);
@@ -444,8 +437,10 @@ public class ArffOutputDialog extends BaseStepDialog
     m_wFields.setLayoutData(m_fdFields);
 
     wGet = new Button(wFieldsComp, SWT.PUSH);
-    wGet.setText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Button.GetFields"));
-    wGet.setToolTipText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Tooltip.GetFields"));
+    wGet.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "System.Button.GetFields"));
+    wGet.setToolTipText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "System.Tooltip.GetFields"));
 
     // setButtonPositions(new Button[] { wGet }, margin, null);
     FormData temp = new FormData();
@@ -455,30 +450,48 @@ public class ArffOutputDialog extends BaseStepDialog
     wGet.setLayoutData(temp);
 
     lsGet = new Listener() {
-        public void handleEvent(Event e) {
-          setupArffMetas();
-          getData();
-        }
-      };
+      public void handleEvent(Event e) {
+        getFields();
+      }
+    };
     wGet.addListener(SWT.Selection, lsGet);
-    
+
+    Label sparseLab = new Label(wFieldsComp, SWT.RIGHT);
+    sparseLab.setText("Output sparse instances");
+    props.setLook(sparseLab);
+    FormData fd = new FormData();
+    fd.left = new FormAttachment(0, 0);
+    fd.right = new FormAttachment(middle, -margin);
+    fd.top = new FormAttachment(wGet, margin);
+    sparseLab.setLayoutData(fd);
+
+    m_sparseOutputCheckBox = new Button(wFieldsComp, SWT.CHECK);
+    props.setLook(m_sparseOutputCheckBox);
+    fd = new FormData();
+    fd.left = new FormAttachment(middle, 0);
+    fd.right = new FormAttachment(100, 0);
+    fd.top = new FormAttachment(wGet, margin);
+    m_sparseOutputCheckBox.setLayoutData(fd);
+
     m_weightFieldCheckBoxLab = new Label(wFieldsComp, SWT.RIGHT);
     m_weightFieldCheckBoxLab.setText("Set instance weights from field");
     props.setLook(m_weightFieldCheckBoxLab);
     FormData fdlWeightFieldCheckBoxLab = new FormData();
     fdlWeightFieldCheckBoxLab.left = new FormAttachment(0, 0);
     fdlWeightFieldCheckBoxLab.right = new FormAttachment(middle, -margin);
-    fdlWeightFieldCheckBoxLab.top = new FormAttachment(wGet, margin);
+    fdlWeightFieldCheckBoxLab.top = new FormAttachment(m_sparseOutputCheckBox,
+        margin);
     m_weightFieldCheckBoxLab.setLayoutData(fdlWeightFieldCheckBoxLab);
-    
+
     m_weightFieldCheckBox = new Button(wFieldsComp, SWT.CHECK);
     props.setLook(m_weightFieldCheckBox);
     FormData fdlWeightFieldCheckBox = new FormData();
     fdlWeightFieldCheckBox.left = new FormAttachment(middle, 0);
     fdlWeightFieldCheckBox.right = new FormAttachment(100, 0);
-    fdlWeightFieldCheckBox.top = new FormAttachment(wGet, margin);
+    fdlWeightFieldCheckBox.top = new FormAttachment(m_sparseOutputCheckBox,
+        margin);
     m_weightFieldCheckBox.setLayoutData(fdlWeightFieldCheckBox);
-    
+
     m_weightFieldLab = new Label(wFieldsComp, SWT.RIGHT);
     m_weightFieldLab.setText("Weight field");
     props.setLook(m_weightFieldLab);
@@ -487,18 +500,21 @@ public class ArffOutputDialog extends BaseStepDialog
     fdlWeightFieldLab.right = new FormAttachment(middle, -margin);
     fdlWeightFieldLab.top = new FormAttachment(m_weightFieldCheckBox, margin);
     m_weightFieldLab.setLayoutData(fdlWeightFieldLab);
-    
+
     m_weightFieldComboBox = new CCombo(wFieldsComp, SWT.BORDER | SWT.READ_ONLY);
-    m_weightFieldComboBox.setToolTipText("Set instance-level weights using this incoming field");
+    m_weightFieldComboBox
+        .setToolTipText("Set instance-level weights using this incoming field");
     props.setLook(m_weightFieldComboBox);
     FormData fdlWeightFieldComboBox = new FormData();
     fdlWeightFieldComboBox.left = new FormAttachment(middle, 0);
     fdlWeightFieldComboBox.right = new FormAttachment(100, 0);
-    fdlWeightFieldComboBox.top = new FormAttachment(m_weightFieldCheckBox, margin);
+    fdlWeightFieldComboBox.top = new FormAttachment(m_weightFieldCheckBox,
+        margin);
     m_weightFieldComboBox.setLayoutData(fdlWeightFieldComboBox);
     m_weightFieldComboBox.setEnabled(false);
-    
+
     m_weightFieldCheckBox.addSelectionListener(new SelectionAdapter() {
+      @Override
       public void widgetSelected(SelectionEvent e) {
         if (m_weightFieldCheckBox.getSelection()) {
           setupWeightFieldComboBox();
@@ -506,30 +522,29 @@ public class ArffOutputDialog extends BaseStepDialog
         m_weightFieldComboBox.setEnabled(m_weightFieldCheckBox.getSelection());
       }
     });
-    
 
     m_fdFieldsComp = new FormData();
     m_fdFieldsComp.left = new FormAttachment(0, 0);
     m_fdFieldsComp.top = new FormAttachment(0, 0);
     m_fdFieldsComp.right = new FormAttachment(100, 0);
     m_fdFieldsComp.bottom = new FormAttachment(100, 0);
-    wFieldsComp.setLayoutData(m_fdFieldsComp);    
+    wFieldsComp.setLayoutData(m_fdFieldsComp);
     wFieldsComp.layout();
-    m_wFieldsTab.setControl(wFieldsComp); 
+    m_wFieldsTab.setControl(wFieldsComp);
 
     m_fdTabFolder = new FormData();
-    m_fdTabFolder.left  = new FormAttachment(0, 0);
-    m_fdTabFolder.top   = new FormAttachment(m_wStepname, margin);
+    m_fdTabFolder.left = new FormAttachment(0, 0);
+    m_fdTabFolder.top = new FormAttachment(m_wStepname, margin);
     m_fdTabFolder.right = new FormAttachment(100, 0);
-    m_fdTabFolder.bottom= new FormAttachment(100, -50);
+    m_fdTabFolder.bottom = new FormAttachment(100, -50);
     m_wTabFolder.setLayoutData(m_fdTabFolder);
-
 
     // Some buttons
     wOK = new Button(shell, SWT.PUSH);
     wOK.setText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Button.OK"));
     wCancel = new Button(shell, SWT.PUSH);
-    wCancel.setText(BaseMessages.getString(ArffOutputMeta.PKG, "System.Button.Cancel"));
+    wCancel.setText(BaseMessages.getString(ArffOutputMeta.PKG,
+        "System.Button.Cancel"));
 
     setButtonPositions(new Button[] { wOK, wCancel }, margin, null);
 
@@ -537,98 +552,84 @@ public class ArffOutputDialog extends BaseStepDialog
 
     // Whenever something changes, set the tooltip to the expanded version:
     m_wFilename.addModifyListener(new ModifyListener() {
-        public void modifyText(ModifyEvent e) {
-          m_wFilename.
-            setToolTipText(transMeta.
-                           environmentSubstitute(m_wFilename.getText()));
-        }
-      });
+      public void modifyText(ModifyEvent e) {
+        m_wFilename.setToolTipText(transMeta.environmentSubstitute(m_wFilename
+            .getText()));
+      }
+    });
 
     m_wFilename.addSelectionListener(new SelectionAdapter() {
-        public void widgetDefaultSelected(SelectionEvent e) {
-          m_currentMeta.setFileName(m_wFilename.getText());
+      @Override
+      public void widgetDefaultSelected(SelectionEvent e) {
+        m_currentMeta.setFileName(m_wFilename.getText());
+      }
+    });
+
+    m_wbFilename.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+        dialog.setFilterExtensions(new String[] { "*.arff", "*" });
+        if (m_wFilename.getText() != null) {
+          String fn = m_wFilename.getText();
+          int l = fn.lastIndexOf(System.getProperty("file.separator"));
+          if (l >= 0) {
+            fn = fn.substring(l + 1, fn.length());
+          }
+          dialog.setFileName(transMeta.environmentSubstitute(fn));
+
         }
-      });
+        dialog.setFilterNames(new String[] { BaseMessages.getString(
+            ArffOutputMeta.PKG, "System.FileType.AllFiles") });
 
-    m_wbFilename.addSelectionListener(
-       new SelectionAdapter() {
-         public void widgetSelected(SelectionEvent e) {
-           FileDialog dialog = new FileDialog(shell, SWT.SAVE);
-           dialog.setFilterExtensions(new String[] {"*.arff", "*"});
-           if (m_wFilename.getText() != null) {
-             String fn = m_wFilename.getText();
-             int l = fn.lastIndexOf(System.getProperty("file.separator"));
-             if (l >= 0) {
-               fn = fn.substring(l+1, fn.length());
-             }
-             dialog.setFileName(transMeta.
-                                environmentSubstitute(fn)); 
+        if (dialog.open() != null) {
 
-           }
-           dialog.setFilterNames(new String[] {
-               BaseMessages.getString(ArffOutputMeta.PKG, "System.FileType.AllFiles")});
+          String fileName = dialog.getFileName();
+          if (!fileName.endsWith(".arff")) {
+            fileName += ".arff";
+          }
 
-           if (dialog.open() != null) {
+          m_wFilename.setText(dialog.getFilterPath()
+              + System.getProperty("file.separator") + fileName);
 
-             String fileName = dialog.getFileName();
-             if (!fileName.endsWith(".arff")) { 
-               fileName += ".arff";
-             }
-
-             m_wFilename.setText(dialog.getFilterPath()
-                                 + System.getProperty("file.separator")
-                                 + fileName);
-             //             }
-
-             // try to load model file and display model
-             //             loadModel();
-             m_currentMeta.setFileName(fileName);
-           }
-         }
-       });
-
+          m_currentMeta.setFileName(fileName);
+        }
+      }
+    });
 
     lsCancel = new Listener() {
-        public void handleEvent(Event e) {
-          cancel();
-        }
-      };
+      public void handleEvent(Event e) {
+        cancel();
+      }
+    };
     lsOK = new Listener() {
-        public void handleEvent(Event e) {
-          ok();
-        }
-      };
+      public void handleEvent(Event e) {
+        ok();
+      }
+    };
 
     wCancel.addListener(SWT.Selection, lsCancel);
     wOK.addListener(SWT.Selection, lsOK);
 
     lsDef = new SelectionAdapter() {
-        public void widgetDefaultSelected(SelectionEvent e) {
-          ok();
-        }
-      };
-    
+      @Override
+      public void widgetDefaultSelected(SelectionEvent e) {
+        ok();
+      }
+    };
+
     m_wStepname.addSelectionListener(lsDef);
 
     // Detect X or ALT-F4 or something that kills this window...
     shell.addShellListener(new ShellAdapter() {
-        public void shellClosed(ShellEvent e) {
-          cancel();
-        }
-      });
-
-    /*    lsResize = new Listener() {
-        public void handleEvent(Event event) {
-          Point size = shell.getSize();
-          m_wFields.setSize(size.x-10, size.y-50);
-          m_wFields.table.setSize(size.x-10, size.y-50);
-          m_wFields.redraw();
-        }
-        };
-        shell.addListener(SWT.Resize, lsResize); */
+      @Override
+      public void shellClosed(ShellEvent e) {
+        cancel();
+      }
+    });
 
     m_wTabFolder.setSelection(0);
-    
+
     // Set the shell size, based upon previous time...
     setSize();
 
@@ -636,7 +637,7 @@ public class ArffOutputDialog extends BaseStepDialog
     m_currentMeta.setChanged(changed);
 
     shell.open();
-    
+
     while (!shell.isDisposed()) {
       if (!display.readAndDispatch()) {
         display.sleep();
@@ -647,8 +648,7 @@ public class ArffOutputDialog extends BaseStepDialog
   }
 
   /**
-   * Copy data out of the ArffOutputMeta object and
-   * into the GUI
+   * Copy data out of the ArffOutputMeta object and into the GUI
    */
   private void getData() {
 
@@ -667,7 +667,7 @@ public class ArffOutputDialog extends BaseStepDialog
 
     String rName = m_currentMeta.getRelationName();
     m_wRelationName.setText(rName);
-    ArffMeta [] fields = m_currentMeta.getOutputFields();
+    ArffMeta[] fields = m_currentMeta.getOutputFields();
     if (fields == null || fields.length == 0) {
       fields = setupArffMetas();
     }
@@ -679,22 +679,26 @@ public class ArffOutputDialog extends BaseStepDialog
       int count = 0;
       for (int i = 0; i < fields.length; i++) {
         if (fields[i] != null) {
-          //          TableItem item = m_wFields.table.getItem(i);
+          // TableItem item = m_wFields.table.getItem(i);
           TableItem item = new TableItem(table, SWT.NONE);
           item.setText(1, Const.NVL(fields[i].getFieldName(), ""));
-          item.setText(2, Const.NVL(getKettleTypeString(fields[i].
-                                      getKettleType()), ""));
-          item.setText(3, Const.NVL(getArffTypeString(fields[i].
-                                      getArffType()), ""));
-          /*          if (fields[i].getArffType() == ArffMeta.NUMERIC) {
-            item.setText(4, Const.NVL(""+fields[i].getPrecision(), ""));
-            } */
+          item.setText(2, ValueMeta.getTypeDesc(fields[i].getKettleType())
+          /* Const.NVL(getKettleTypeString(fields[i].getKettleType()), "") */);
+          item.setText(3,
+              Const.NVL(getArffTypeString(fields[i].getArffType()), ""));
+          if (fields[i].getArffType() == ArffMeta.NOMINAL
+              && !Const.isEmpty(fields[i].getNominalVals())) {
+            item.setText(4, fields[i].getNominalVals());
+          } else if (fields[i].getArffType() == ArffMeta.DATE
+              && !Const.isEmpty(fields[i].getDateFormat())) {
+            item.setText(4, fields[i].getDateFormat());
+          }
         }
       }
       m_wFields.removeEmptyRows();
       m_wFields.setRowNums();
       m_wFields.optWidth(true);
-      
+
       // weight field specified?
       if (!Const.isEmpty(m_currentMeta.getWeightFieldName())) {
         m_weightFieldCheckBox.setSelection(true);
@@ -702,37 +706,55 @@ public class ArffOutputDialog extends BaseStepDialog
         m_weightFieldComboBox.setEnabled(true);
         m_weightFieldComboBox.setText(m_currentMeta.getWeightFieldName());
       }
+
+      m_sparseOutputCheckBox.setSelection(m_currentMeta
+          .getOutputSparseInstance());
+    }
+  }
+
+  private void getFields() {
+    try {
+      RowMetaInterface r = transMeta.getPrevStepFields(stepname);
+      if (r != null) {
+        BaseStepDialog.getFieldsFromPrevious(r, m_wFields, 1, new int[] { 1 },
+            new int[] { 2 }, -1, -1, null);
+      }
+    } catch (KettleException e) {
+      logError(BaseMessages.getString(ArffOutputMeta.class,
+          "System.Dialog.GetFieldsFailed.Message"), e);
+      new ErrorDialog(shell, BaseMessages.getString(ArffOutputMeta.class,
+          "System.Dialog.GetFieldsFailed.Title"), BaseMessages.getString(
+          ArffOutputMeta.class, "System.Dialog.GetFieldsFailed.Message"), e);
     }
   }
 
   /**
-   * Setup meta data for the fields based on row structure
-   * coming from previous step (if any)
-   *
+   * Setup meta data for the fields based on row structure coming from previous
+   * step (if any)
+   * 
    * @return an array of ArffMeta
    */
   private ArffMeta[] setupArffMetas() {
     // try and set up from incoming fields from previous step
     StepMeta stepMeta = transMeta.findStep(stepname);
-    
+
     if (stepMeta != null) {
       try {
         RowMetaInterface row = transMeta.getPrevStepFields(stepMeta);
         m_currentMeta.setupArffMeta(row);
         return m_currentMeta.getOutputFields();
       } catch (KettleException ex) {
-        log.logError(toString(),
-            BaseMessages.
-                     getString(ArffOutputMeta.PKG, "ArffOutputDialog.Log.UnableToFindInput"));
+        log.logError(toString(), BaseMessages.getString(ArffOutputMeta.PKG,
+            "ArffOutputDialog.Log.UnableToFindInput"));
       }
     }
     return null;
   }
-  
+
   private void setupWeightFieldComboBox() {
- // try and set up from incoming fields from previous step
+    // try and set up from incoming fields from previous step
     StepMeta stepMeta = transMeta.findStep(stepname);
-    
+
     if (stepMeta != null) {
       try {
         RowMetaInterface rmi = transMeta.getPrevStepFields(stepMeta);
@@ -740,7 +762,7 @@ public class ArffOutputDialog extends BaseStepDialog
         for (int i = 0; i < rmi.size(); i++) {
           ValueMetaInterface inField = rmi.getValueMeta(i);
           int fieldType = inField.getType();
-          switch(fieldType) {
+          switch (fieldType) {
           case ValueMetaInterface.TYPE_NUMBER:
           case ValueMetaInterface.TYPE_INTEGER:
             m_weightFieldComboBox.add(inField.getName());
@@ -748,15 +770,15 @@ public class ArffOutputDialog extends BaseStepDialog
           }
         }
       } catch (KettleException ex) {
-        log.logError(toString(), BaseMessages.
-            getString(ArffOutputMeta.PKG, "ArffOutputDialog.Log.UnableToFindInput"));
+        log.logError(toString(), BaseMessages.getString(ArffOutputMeta.PKG,
+            "ArffOutputDialog.Log.UnableToFindInput"));
       }
     }
   }
 
   /**
    * Convert integer Kettle type to descriptive String
-   *
+   * 
    * @param kettleType the Kettle data type
    * @return the Kettle data type as a String
    */
@@ -772,13 +794,13 @@ public class ArffOutputDialog extends BaseStepDialog
       return "String";
     case ValueMetaInterface.TYPE_DATE:
       return "Date";
-    } 
+    }
     return "Unknown";
   }
 
   /**
    * Convert String Kettle type to integer code
-   *
+   * 
    * @param kettleType the Kettle data type as a String
    * @return the integer Kettle type (as defined in ValueMetaInterface)
    */
@@ -803,9 +825,8 @@ public class ArffOutputDialog extends BaseStepDialog
 
   /**
    * Convert ARFF type to a descriptive String
-   *
-   * @param arffType the ARFF data type as defined in
-   * ArffMeta
+   * 
+   * @param arffType the ARFF data type as defined in ArffMeta
    * @return the ARFF data type as a String
    */
   private String getArffTypeString(int arffType) {
@@ -813,16 +834,17 @@ public class ArffOutputDialog extends BaseStepDialog
       return "Numeric";
     } else if (arffType == ArffMeta.NOMINAL) {
       return "Nominal";
+    } else if (arffType == ArffMeta.STRING) {
+      return "String";
     }
     return "Date";
   }
 
   /**
    * Convert ARFF type to an integer code
-   *
+   * 
    * @param arffType the ARFF data type as a String
-   * @return the ARFF data type as an integer (as defined
-   * in ArffMeta
+   * @return the ARFF data type as an integer (as defined in ArffMeta
    */
   private int getArffTypeInt(String arffType) {
     if (arffType.equalsIgnoreCase("Numeric")) {
@@ -830,6 +852,9 @@ public class ArffOutputDialog extends BaseStepDialog
     }
     if (arffType.equalsIgnoreCase("Nominal")) {
       return ArffMeta.NOMINAL;
+    }
+    if (arffType.equalsIgnoreCase("String")) {
+      return ArffMeta.STRING;
     }
     return ArffMeta.DATE;
   }
@@ -841,19 +866,19 @@ public class ArffOutputDialog extends BaseStepDialog
     // Encoding of the text file:
     if (!m_gotEncodings) {
       m_gotEncodings = true;
-      
+
       m_wEncoding.removeAll();
-      List<Charset> values = 
-        new ArrayList<Charset>(Charset.availableCharsets().values());
+      List<Charset> values = new ArrayList<Charset>(Charset.availableCharsets()
+          .values());
       for (int i = 0; i < values.size(); i++) {
-        Charset charSet = (Charset)values.get(i);
+        Charset charSet = values.get(i);
         m_wEncoding.add(charSet.displayName());
       }
-                                             
+
       // Now select the default!
-      String defEncoding = 
-        Const.getEnvironmentVariable("file.encoding", "UTF-8");
-      int idx = Const.indexOfString(defEncoding, m_wEncoding.getItems() );
+      String defEncoding = Const.getEnvironmentVariable("file.encoding",
+          "UTF-8");
+      int idx = Const.indexOfString(defEncoding, m_wEncoding.getItems());
       if (idx >= 0) {
         m_wEncoding.select(idx);
       }
@@ -868,7 +893,7 @@ public class ArffOutputDialog extends BaseStepDialog
     m_currentMeta.setOutputFields(m_originalMeta.getOutputFields());
     dispose();
   }
-  
+
   private void ok() {
     if (Const.isEmpty(m_wStepname.getText())) {
       return;
@@ -876,14 +901,11 @@ public class ArffOutputDialog extends BaseStepDialog
 
     stepname = m_wStepname.getText(); // return value
 
-    /*    String arffOutName = 
-          transMeta.environmentSubstitute(m_wFilename.getText()); */
-
     m_currentMeta.setFileName(m_wFilename.getText());
 
     String relName = m_wRelationName.getText();
     m_currentMeta.setRelationName(relName);
-    
+
     String encoding = m_wEncoding.getText();
     m_currentMeta.setEncoding(encoding);
     String format = m_wFormat.getText();
@@ -895,28 +917,40 @@ public class ArffOutputDialog extends BaseStepDialog
 
     for (int i = 0; i < nrNonEmptyFields; i++) {
       TableItem item = m_wFields.getNonEmpty(i);
-      
+
       String fieldName = item.getText(1);
       int kettleType = getKettleTypeInt(item.getText(2));
       int arffType = getArffTypeInt(item.getText(3));
+      String nomDate = item.getText(4);
 
-      m_currentMeta.getOutputFields()[i] = 
-        new ArffMeta(fieldName, kettleType, arffType);
+      m_currentMeta.getOutputFields()[i] = new ArffMeta(fieldName, kettleType,
+          arffType);
+
+      if (!Const.isEmpty(nomDate)) {
+        if (arffType == ArffMeta.NOMINAL) {
+          m_currentMeta.getOutputFields()[i].setNominalVals(nomDate);
+        } else if (arffType == ArffMeta.DATE) {
+          m_currentMeta.getOutputFields()[i].setDateFormat(nomDate);
+        }
+      }
     }
-    
+
     // weight field set?
-    if (m_weightFieldCheckBox.getSelection() && 
-        !Const.isEmpty(m_weightFieldComboBox.getText())) {
+    if (m_weightFieldCheckBox.getSelection()
+        && !Const.isEmpty(m_weightFieldComboBox.getText())) {
       m_currentMeta.setWeightFieldName(m_weightFieldComboBox.getText());
     } else {
       m_currentMeta.setWeightFieldName(null);
     }
 
+    m_currentMeta.setOutputSparseIntsances(m_sparseOutputCheckBox
+        .getSelection());
+
     if (!m_originalMeta.equals(m_currentMeta)) {
       m_currentMeta.setChanged();
       changed = m_currentMeta.hasChanged();
     }
-    
+
     dispose();
   }
 }
