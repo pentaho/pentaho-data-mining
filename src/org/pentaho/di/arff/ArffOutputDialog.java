@@ -712,22 +712,6 @@ public class ArffOutputDialog extends BaseStepDialog implements
     }
   }
 
-  private void getFields() {
-    try {
-      RowMetaInterface r = transMeta.getPrevStepFields(stepname);
-      if (r != null) {
-        BaseStepDialog.getFieldsFromPrevious(r, m_wFields, 1, new int[] { 1 },
-            new int[] { 2 }, -1, -1, null);
-      }
-    } catch (KettleException e) {
-      logError(BaseMessages.getString(ArffOutputMeta.class,
-          "System.Dialog.GetFieldsFailed.Message"), e);
-      new ErrorDialog(shell, BaseMessages.getString(ArffOutputMeta.class,
-          "System.Dialog.GetFieldsFailed.Title"), BaseMessages.getString(
-          ArffOutputMeta.class, "System.Dialog.GetFieldsFailed.Message"), e);
-    }
-  }
-
   /**
    * Setup meta data for the fields based on row structure coming from previous
    * step (if any)
@@ -892,6 +876,64 @@ public class ArffOutputDialog extends BaseStepDialog implements
     // revert to original state of the fields
     m_currentMeta.setOutputFields(m_originalMeta.getOutputFields());
     dispose();
+  }
+
+  private void getFields() {
+    try {
+      RowMetaInterface r = transMeta.getPrevStepFields(stepname);
+      if (r != null) {
+        BaseStepDialog.getFieldsFromPrevious(r, m_wFields, 1, new int[] { 1 },
+            new int[] { 2 }, -1, -1, null);
+
+        // set some default arff stuff for the new fields
+        int nrNonEmptyFields = m_wFields.nrNonEmpty();
+        for (int i = 0; i < nrNonEmptyFields; i++) {
+          TableItem item = m_wFields.getNonEmpty(i);
+
+          int kettleType = getKettleTypeInt(item.getText(2));
+          if (Const.isEmpty(item.getText(3))) {
+
+            switch (kettleType) {
+            case ValueMetaInterface.TYPE_NUMBER:
+            case ValueMetaInterface.TYPE_INTEGER:
+            case ValueMetaInterface.TYPE_BOOLEAN:
+              item.setText(3, "Numeric");
+              break;
+            case ValueMetaInterface.TYPE_STRING: {
+              item.setText(3, "Nominal");
+              int index = r.indexOfValue(item.getText(1));
+              ValueMetaInterface vm = r.getValueMeta(index);
+              if (vm.getStorageType() == ValueMetaInterface.STORAGE_TYPE_INDEXED) {
+                Object[] legalValues = vm.getIndex();
+                String vals = "";
+                for (int j = 0; i < legalValues.length; j++) {
+                  if (j != 0) {
+                    vals += "," + legalValues[j].toString();
+                  } else {
+                    vals += legalValues[j].toString();
+                  }
+                }
+                item.setText(4, vals);
+              }
+            }
+              break;
+            case ValueMetaInterface.TYPE_DATE:
+              item.setText(3, "Date");
+              int index = r.indexOfValue(item.getText(1));
+              ValueMetaInterface vm = r.getValueMeta(index);
+              item.setText(4, vm.getDateFormat().toPattern());
+              break;
+            }
+          }
+        }
+      }
+    } catch (KettleException e) {
+      logError(BaseMessages.getString(ArffOutputMeta.class,
+          "System.Dialog.GetFieldsFailed.Message"), e);
+      new ErrorDialog(shell, BaseMessages.getString(ArffOutputMeta.class,
+          "System.Dialog.GetFieldsFailed.Title"), BaseMessages.getString(
+          ArffOutputMeta.class, "System.Dialog.GetFieldsFailed.Message"), e);
+    }
   }
 
   private void ok() {
