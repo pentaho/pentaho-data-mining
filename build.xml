@@ -98,7 +98,7 @@
 	    		dir="${lib}" 
 	    		includes="**/*.jar"/>
     </copy>
-    <copy file="${libext-ivy}/pdm-3.7-ce-${dependency.weka.revision}.jar"
+    <copy file="${libext-ivy}/pdm-${dependency.weka.revision}.jar"
                   todir="${stage}/lib"/>
     <copy file="${libext-ivy}/dm-commons-${dependency.dm-commons.revision}.jar"
                   todir="${stage}/lib"/>
