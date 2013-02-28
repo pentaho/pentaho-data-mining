@@ -19,19 +19,18 @@
  *    Copyright 2008 Pentaho Corporation.  All rights reserved. 
  *
  */
- 
+
 package org.pentaho.di.scoring;
 
 import java.io.Serializable;
 
 import org.pentaho.di.core.logging.LogChannelInterface;
-import org.pentaho.di.core.logging.LogWriter;
 
 import weka.gui.Logger;
 
 /**
  * Adapts Kettle logging to Weka's Logger interface
- *
+ * 
  * @author Mark Hall (mhall{[at]}pentaho{[dot]}org)
  * @version $Revision: 1.0 $
  */
@@ -41,7 +40,7 @@ public class LogAdapter implements Serializable, Logger {
    * For serialization
    */
   private static final long serialVersionUID = 4861213857483800216L;
-  
+
   private transient LogChannelInterface m_log;
 
   public LogAdapter(LogChannelInterface log) {
@@ -50,11 +49,9 @@ public class LogAdapter implements Serializable, Logger {
 
   public void statusMessage(String message) {
     m_log.logDetailed(message);
-//    m_log.println(LogWriter.LOG_LEVEL_DETAILED, message);
   }
 
   public void logMessage(String message) {
     m_log.logBasic(message);
-//    m_log.println(LogWriter.LOG_LEVEL_BASIC, message);
   }
 }
