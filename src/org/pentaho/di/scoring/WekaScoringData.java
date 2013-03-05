@@ -25,7 +25,6 @@ package org.pentaho.di.scoring;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -37,10 +36,13 @@ import java.util.Vector;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.vfs.FileObject;
 import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.variables.VariableSpace;
+import org.pentaho.di.core.vfs.KettleVFS;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.step.BaseStepData;
 import org.pentaho.di.trans.step.StepDataInterface;
@@ -57,28 +59,83 @@ import weka.core.xml.XStream;
 /**
  * Holds temporary data and has routines for loading serialized models.
  * 
- * @author Mark Hall (mhall{[at]}pentaho.org)
- * @version 1.0
+ * @author Mark Hall (mhall{[at]}pentaho{[dot]}org)
  */
 public class WekaScoringData extends BaseStepData implements StepDataInterface {
 
-  // some constants for various input field - attribute match/type
-  // problems
+  /**
+   * some constants for various input field - attribute match/type problems
+   */
   public static final int NO_MATCH = -1;
   public static final int TYPE_MISMATCH = -2;
 
-  // this class contains intermediate results,
-  // info about the input format, derived output
-  // format etc.
-
-  // the output data format
+  /** the output data format */
   protected RowMetaInterface m_outputRowMeta;
 
-  // holds values for instances constructed for prediction
+  /** holds values for instances constructed for prediction */
   private double[] m_vals = null;
+
+  /**
+   * Holds the actual Weka model (classifier, clusterer or PMML) used by this
+   * copy of the step
+   */
+  protected WekaScoringModel m_model;
+
+  /**
+   * Holds a default model - only used when model files are sourced from a field
+   * in the incoming data rows. In this case, it is the fallback model if there
+   * is no model file specified in the incoming row.
+   */
+  protected WekaScoringModel m_defaultModel;
+
+  /** used to map attribute indices to incoming field indices */
+  private int[] m_mappingIndexes;
+
+  /** whether to update the model (if incremental) */
+  protected boolean m_updateIncrementalModel = false;
 
   public WekaScoringData() {
     super();
+  }
+
+  /**
+   * Set the model for this copy of the step to use
+   * 
+   * @param model the model to use
+   */
+  public void setModel(WekaScoringModel model) {
+    m_model = model;
+  }
+
+  /**
+   * Get the model that this copy of the step is using
+   * 
+   * @return the model that this copy of the step is using
+   */
+  public WekaScoringModel getModel() {
+    return m_model;
+  }
+
+  /**
+   * Set the default model for this copy of the step to use. This gets used if
+   * we are getting model file paths from a field in the incoming row structure
+   * and a given row has null for the model path.
+   * 
+   * @param model the model to use as fallback
+   */
+  public void setDefaultModel(WekaScoringModel model) {
+    m_defaultModel = model;
+  }
+
+  /**
+   * Get the default model for this copy of the step to use. This gets used if
+   * we are getting model file paths from a field in the incoming row structure
+   * and a given row has null for the model path.
+   * 
+   * @return the model to use as fallback
+   */
+  public WekaScoringModel getDefaultModel() {
+    return m_defaultModel;
   }
 
   /**
@@ -100,6 +157,55 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
   }
 
   /**
+   * Finds a mapping between the attributes that a Weka model has been trained
+   * with and the incoming Kettle row format. Returns an array of indices, where
+   * the element at index 0 of the array is the index of the Kettle field that
+   * corresponds to the first attribute in the Instances structure, the element
+   * at index 1 is the index of the Kettle fields that corresponds to the second
+   * attribute, ...
+   * 
+   * @param header the Instances header
+   * @param inputRowMeta the meta data for the incoming rows
+   * @param updateIncrementalModel true if the model is incremental and should
+   *          be updated on the incoming instances
+   * @param log the log to use
+   */
+  public void mapIncomingRowMetaData(Instances header,
+      RowMetaInterface inputRowMeta, boolean updateIncrementalModel,
+      LogChannelInterface log) {
+    m_mappingIndexes = WekaScoringData.findMappings(header, inputRowMeta);
+    m_updateIncrementalModel = updateIncrementalModel;
+
+    // If updating of incremental models has been selected, then
+    // check on the ability to do this
+    if (m_updateIncrementalModel && m_model.isSupervisedLearningModel()) {
+      if (m_model.isUpdateableModel()) {
+        // Do we have the class mapped successfully to an incoming
+        // Kettle field
+        if (m_mappingIndexes[header.classIndex()] == WekaScoringData.NO_MATCH
+            || m_mappingIndexes[header.classIndex()] == WekaScoringData.TYPE_MISMATCH) {
+          m_updateIncrementalModel = false;
+          log.logError(BaseMessages.getString(WekaScoringMeta.PKG,
+              "WekaScoringMeta.Log.NoMatchForClass")); //$NON-NLS-1$
+        }
+      } else {
+        m_updateIncrementalModel = false;
+        log.logError(BaseMessages.getString(WekaScoringMeta.PKG,
+            "WekaScoringMeta.Log.ModelNotUpdateable")); //$NON-NLS-1$
+      }
+    }
+  }
+
+  public static boolean modelFileExists(String modelFile, VariableSpace space)
+      throws Exception {
+
+    modelFile = space.environmentSubstitute(modelFile);
+    FileObject modelF = KettleVFS.getFileObject(modelFile);
+
+    return modelF.exists();
+  }
+
+  /**
    * Loads a serialized model. Models can either be binary serialized Java
    * objects, objects deep-serialized to xml, or PMML.
    * 
@@ -107,43 +213,59 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
    * @return the model
    * @throws Exception if there is a problem laoding the model.
    */
-  public static WekaScoringModel loadSerializedModel(File modelFile,
-      LogChannelInterface log) throws Exception {
+  public static WekaScoringModel loadSerializedModel(String modelFile,
+      LogChannelInterface log, VariableSpace space) throws Exception {
 
     Object model = null;
     Instances header = null;
     int[] ignoredAttsForClustering = null;
 
-    if (modelFile.getName().toLowerCase().endsWith(".xml")) {
+    modelFile = space.environmentSubstitute(modelFile);
+    FileObject modelF = KettleVFS.getFileObject(modelFile);
+    if (!modelF.exists()) {
+      throw new Exception(
+          BaseMessages
+              .getString(
+                  WekaScoringMeta.PKG,
+                  "WekaScoring.Error.NonExistentModelFile", space.environmentSubstitute(modelFile))); //$NON-NLS-1$
+    }
+
+    InputStream is = KettleVFS.getInputStream(modelF);
+    BufferedInputStream buff = new BufferedInputStream(is);
+
+    if (modelFile.toLowerCase().endsWith(".xml")) { //$NON-NLS-1$
       // assume it is PMML
-      model = PMMLFactory.getPMMLModel(modelFile, null);
+      model = PMMLFactory.getPMMLModel(buff, null);
 
       // we will use the mining schema as the instance structure
       header = ((PMMLModel) model).getMiningSchema()
           .getMiningSchemaAsInstances();
-    } else if (modelFile.getName().toLowerCase().endsWith(".xstreammodel")) {
+
+      buff.close();
+    } else if (modelFile.toLowerCase().endsWith(".xstreammodel")) { //$NON-NLS-1$
       log.logBasic(BaseMessages.getString(WekaScoringMeta.PKG,
-          "WekaScoringData.Log.LoadXMLModel"));
-      // System.err.println("Trying to load XML model...");
+          "WekaScoringData.Log.LoadXMLModel")); //$NON-NLS-1$
+
       if (XStream.isPresent()) {
-        Vector v = (Vector) XStream.read(modelFile.getAbsolutePath());
-        // System.err.println("Got vector...");
+        Vector v = (Vector) XStream.read(buff);
+
         model = v.elementAt(0);
         if (v.size() == 2) {
           // try and grab the header
           header = (Instances) v.elementAt(1);
-          // System.err.println("Got header...");
         }
+        buff.close();
       } else {
-        throw new Exception("Can't load XML model because XStream is not "
-            + "in the classpath!");
+        buff.close();
+        throw new Exception(BaseMessages.getString(WekaScoringMeta.PKG,
+            "WekaScoringData.Error.CantLoadXMLModel")); //$NON-NLS-1$
       }
     } else {
-      InputStream is = new FileInputStream(modelFile);
-      if (modelFile.getName().toLowerCase().endsWith(".gz")) {
-        is = new GZIPInputStream(is);
+      InputStream stream = buff;
+      if (modelFile.toLowerCase().endsWith(".gz")) { //$NON-NLS-1$
+        stream = new GZIPInputStream(buff);
       }
-      ObjectInputStream oi = new ObjectInputStream(new BufferedInputStream(is));
+      ObjectInputStream oi = new ObjectInputStream(stream);
 
       model = oi.readObject();
 
@@ -159,7 +281,6 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
         }
       }
       oi.close();
-      // System.err.println(header);
     }
 
     WekaScoringModel wsm = WekaScoringModel.createScorer(model);
@@ -180,7 +301,7 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
     Instances header = wsm.getHeader();
     OutputStream os = new FileOutputStream(saveTo);
 
-    if (saveTo.getName().toLowerCase().endsWith(".gz")) {
+    if (saveTo.getName().toLowerCase().endsWith(".gz")) { //$NON-NLS-1$
       os = new GZIPOutputStream(os);
     }
     ObjectOutputStream oos = new ObjectOutputStream(
@@ -278,8 +399,9 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
       RowMetaInterface outputMeta, List<Object[]> inputRows,
       WekaScoringMeta meta) throws Exception {
 
-    int[] mappingIndexes = meta.getMappingIndexes();
-    WekaScoringModel model = meta.getModel();
+    int[] mappingIndexes = m_mappingIndexes;
+    WekaScoringModel model = getModel(); // copy of the model for this copy of
+                                         // the step
     boolean outputProbs = meta.getOutputProbabilities();
     boolean supervised = model.isSupervisedLearningModel();
 
@@ -317,7 +439,8 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
               String newVal = classAtt.value(maxProb);
               resultRow[index++] = newVal;
             } else {
-              String newVal = "Unable to predict";
+              String newVal = BaseMessages.getString(WekaScoringMeta.PKG,
+                  "WekaScoringData.Message.UnableToPredict"); //$NON-NLS-1$
               resultRow[index++] = newVal;
             }
           }
@@ -327,7 +450,8 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
             Double newVal = new Double(maxProb);
             resultRow[index++] = newVal;
           } else {
-            String newVal = "Unable to assign cluster";
+            String newVal = BaseMessages.getString(WekaScoringMeta.PKG,
+                "WekaScoringData.Message.UnableToPredictCluster"); //$NON-NLS-1$
             resultRow[index++] = newVal;
           }
         }
@@ -362,8 +486,8 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
       RowMetaInterface outputMeta, Object[] inputRow, WekaScoringMeta meta)
       throws Exception {
 
-    int[] mappingIndexes = meta.getMappingIndexes();
-    WekaScoringModel model = meta.getModel();
+    int[] mappingIndexes = m_mappingIndexes;
+    WekaScoringModel model = getModel();
     boolean outputProbs = meta.getOutputProbabilities();
     boolean supervised = model.isSupervisedLearningModel();
 
@@ -399,7 +523,8 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
             String newVal = classAtt.value(maxProb);
             resultRow[index++] = newVal;
           } else {
-            String newVal = "Unable to predict";
+            String newVal = BaseMessages.getString(WekaScoringMeta.PKG,
+                "WekaScoringData.Message.UnableToPredict"); //$NON-NLS-1$
             resultRow[index++] = newVal;
           }
         }
@@ -409,7 +534,8 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
           Double newVal = new Double(maxProb);
           resultRow[index++] = newVal;
         } else {
-          String newVal = "Unable to assign cluster";
+          String newVal = BaseMessages.getString(WekaScoringMeta.PKG,
+              "WekaScoringData.Message.UnableToPredictCluster"); //$NON-NLS-1$
           resultRow[index++] = newVal;
         }
       }
@@ -420,8 +546,6 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
         resultRow[index++] = newVal;
       }
     }
-
-    // resultRow[index] = " ";
 
     return resultRow;
   }
@@ -455,12 +579,9 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
           Object inputVal = inputRow[mappingIndexes[i]];
 
           Attribute temp = header.attribute(i);
-          // String attName = temp.name();
           ValueMetaInterface tempField = inputMeta
               .getValueMeta(mappingIndexes[i]);
           int fieldType = tempField.getType();
-
-          // if (inputVal == null) {
 
           // Check for missing value (null or empty string)
           if (tempField.isNull(inputVal)) {
@@ -507,57 +628,17 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
             break;
           }
           default:
-            // System.err.println("Missing - default " + i);
             m_vals[i] = Utils.missingValue();
           }
         } catch (Exception e) {
-          // System.err.println("Exception - missing " + i);
           m_vals[i] = Utils.missingValue();
         }
       } else {
         // set to missing value
-        // System.err.println("Unmapped " + i);
         m_vals[i] = Utils.missingValue();
       }
-
-      // m_vals[i] = Instance.missingValue();
     }
 
-    /*
-     * for (int i = 0; i < header.numAttributes(); i++) { if (mappingIndexes[i]
-     * >= 0) { Object inputVal = inputRow[mappingIndexes[i]]; if (inputVal ==
-     * null) { // set missing m_vals[i] = Instance.missingValue(); continue; }
-     * Attribute temp = header.attribute(i); // String attName = temp.name();
-     * ValueMetaInterface tempField = inputMeta.getValueMeta(mappingIndexes[i]);
-     * 
-     * // Quick check for type mismatch // (i.e. string occuring in what was
-     * thought to be // a numeric incoming field if (temp.isNumeric()) { if
-     * (!tempField.isBoolean() && !tempField.isNumeric()) { m_vals[i] =
-     * Instance.missingValue(); continue; } } else { if (!tempField.isString())
-     * { m_vals[i] = Instance.missingValue(); continue; } }
-     * 
-     * int fieldType = tempField.getType();
-     * 
-     * try { switch(fieldType) { case ValueMetaInterface.TYPE_BOOLEAN: { Boolean
-     * b = tempField.getBoolean(inputVal); if (b.booleanValue()) { m_vals[i] =
-     * 1.0; } else { m_vals[i] = 0.0; } } break;
-     * 
-     * case ValueMetaInterface.TYPE_NUMBER: case
-     * ValueMetaInterface.TYPE_INTEGER: { Number n =
-     * tempField.getNumber(inputVal); m_vals[i] = n.doubleValue(); } break;
-     * 
-     * case ValueMetaInterface.TYPE_STRING: { String s =
-     * tempField.getString(inputVal); // now need to look for this value in the
-     * attribute // in order to get the correct index int index =
-     * temp.indexOfValue(s); if (index < 0) { // set to missing value m_vals[i]
-     * = Instance.missingValue(); } else { m_vals[i] = (double)index; } } break;
-     * 
-     * default: // for unsupported type set to missing value m_vals[i] =
-     * Instance.missingValue(); break; } } catch (Exception ex) { // quietly
-     * ignore -- set to missing anything that // is not parseable as the
-     * expected type m_vals[i] = Instance.missingValue(); } } else { // set to
-     * missing value m_vals[i] = Instance.missingValue(); } }
-     */
     Instance newInst = new DenseInstance(1.0, m_vals);
     newInst.setDataset(header);
     return newInst;
