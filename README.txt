@@ -1,6 +1,6 @@
 =============================================================
                             README
-              ARFF output plugin for Kettle 3.0
+              ARFF output plugin for Kettle 4.x
 =============================================================
 
 The ARFF output plugin allows Kettle data streams to be saved to a
@@ -15,6 +15,9 @@ version of Weka, unpack the archive and copy the "weka.jar" to
 libext. To deploy the plugin in Kettle, copy the contents of
 ArffOutputDeploy, along with weka.jar, to your Kettle plugins
 directory.
+
+NOTE: Weka >=3.7.1 requires Java 1.6, so Kettle needs to be
+run with a 1.6 or higher JRE.
 
 Weka can be downloaded from
 
