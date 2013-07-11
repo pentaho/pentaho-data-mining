@@ -24,6 +24,8 @@ package org.pentaho.di.scoring;
 
 import java.io.Serializable;
 
+import org.pentaho.di.core.logging.LogChannelInterface;
+
 import weka.core.Instances;
 import weka.core.Instance;
 import weka.classifiers.Classifier;
@@ -49,12 +51,21 @@ public abstract class WekaScoringModel implements Serializable {
    *
    * @param model the actual Weka model to enacpsulate
    */
-  public WekaScoringModel(Object model) {
-    if (model instanceof PMMLModel) {
-      LogAdapter logger = new LogAdapter();
-      ((PMMLModel)model).setLog(logger);
-    }
+  public WekaScoringModel(Object model) {    
     setModel(model);
+  }
+  
+  /**
+   * Set the log to pass on to the model. Only PMML models
+   * require logging.
+   * 
+   * @param log the log to use
+   */
+  public void setLog(LogChannelInterface log) {
+    if (getModel() instanceof PMMLModel) {
+      LogAdapter logger = new LogAdapter(log);
+      ((PMMLModel)getModel()).setLog(logger);
+    }
   }
 
   /**
@@ -120,6 +131,30 @@ public abstract class WekaScoringModel implements Serializable {
    */
   public abstract double[] distributionForInstance(Instance inst)
     throws Exception;
+  
+  /**
+   * Batch scoring method. Call isBatchPredictor() first in 
+   * order to determine if the underlying model can handle batch 
+   * scoring.
+   * 
+   * @param insts the instances to score
+   * @return an array of predictions
+   * @throws Exception if a problem occurs
+   */
+  public abstract double[] classifyInstances(Instances insts)
+    throws Exception;
+  
+  /**
+   * Batch scoring method. Call isBatchPredictor() first in 
+   * order to determine if the underlying model can handle batch 
+   * scoring.
+   * 
+   * @param insts the instances to score
+   * @return an array of probability distributions, one for each instance
+   * @throws Exception if a problem occurs
+   */
+  public abstract double[][] distributionsForInstances(Instances insts) 
+    throws Exception;
 
   /**
    * Returns true if the encapsulated Weka model is a supervised
@@ -139,6 +174,15 @@ public abstract class WekaScoringModel implements Serializable {
    * model
    */
   public abstract boolean isUpdateableModel();
+  
+  /**
+   * Returns true if the encapsulated Weka model can produce 
+   * predictions in a batch.
+   * 
+   * @return true if the encapsulated Weka model can produce 
+   * predictions in a batch
+   */
+  public abstract boolean isBatchPredictor();
 
   /**
    * Update (if possible) a model with the supplied Instance

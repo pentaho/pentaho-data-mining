@@ -24,6 +24,7 @@ package org.pentaho.di.scoring;
 
 import java.io.Serializable;
 
+import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.logging.LogWriter;
 
 import weka.gui.Logger;
@@ -41,17 +42,19 @@ public class LogAdapter implements Serializable, Logger {
    */
   private static final long serialVersionUID = 4861213857483800216L;
   
-  private transient LogWriter m_log;
+  private transient LogChannelInterface m_log;
 
-  public LogAdapter() {
-    m_log = LogWriter.getInstance();
+  public LogAdapter(LogChannelInterface log) {
+    m_log = log;
   }
 
   public void statusMessage(String message) {
-    m_log.println(LogWriter.LOG_LEVEL_DETAILED, message);
+    m_log.logDetailed(message);
+//    m_log.println(LogWriter.LOG_LEVEL_DETAILED, message);
   }
 
   public void logMessage(String message) {
-    m_log.println(LogWriter.LOG_LEVEL_BASIC, message);
+    m_log.logBasic(message);
+//    m_log.println(LogWriter.LOG_LEVEL_BASIC, message);
   }
 }

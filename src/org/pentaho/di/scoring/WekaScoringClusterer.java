@@ -22,8 +22,11 @@
 
 package org.pentaho.di.scoring;
 
+import weka.core.BatchPredictor;
+
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.Utils;
 import weka.clusterers.Clusterer;
 import weka.clusterers.UpdateableClusterer;
 import weka.clusterers.DensityBasedClusterer;
@@ -214,5 +217,56 @@ class WekaScoringClusterer extends WekaScoringModel {
       : m_ignoredString;
 
     return ignored + m_model.toString();
+  }
+
+  /**
+   * Batch scoring method.
+   * 
+   * @param insts the instances to score
+   * @return an array of predictions (index of the predicted class label for
+   * each instance)
+   * @throws Exception if a problem occurs
+   */
+  public double[] classifyInstances(Instances insts) throws Exception {
+    double[][] preds = distributionsForInstances(insts);
+    
+    double[] result = new double[preds.length];
+    for (int i = 0; i < preds.length; i++) {
+      double[] p = preds[i];
+      
+      if (Utils.sum(p) <= 0) {
+        result[i] = Utils.missingValue();
+      } else {      
+        result[i] = Utils.maxIndex(p);
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Batch scoring method
+   * 
+   * @param insts the instances to get predictions for
+   * @return an array of probability distributions, one for each instance
+   * @throws Exception if a problem occurs
+   */
+  public double[][] distributionsForInstances(Instances insts) throws Exception {
+    if (!isBatchPredictor()) {
+      throw new Exception("Weka model cannot produce batch predictions!");
+    }
+    
+    return ((BatchPredictor)m_model).distributionsForInstances(insts);
+  }
+
+  /**
+   * Returns true if the encapsulated Weka model can produce 
+   * predictions in a batch.
+   * 
+   * @return true if the encapsulated Weka model can produce 
+   * predictions in a batch
+   */
+  public boolean isBatchPredictor() {
+    return (m_model instanceof BatchPredictor);
   }
 }

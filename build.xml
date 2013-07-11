@@ -1,137 +1,198 @@
-<project name="WekaScoringPlugin" default="default" basedir=".">
+<project name="WekaScoringPlugin" default="default" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+  <import file="build-res/subfloor.xml"/>
 
-	  <description>
+  <description>
 	      WekaScoringPlugin plugin build file
 	    </description>
 
-	  <tstamp prefix="start"/>
+  <tstamp prefix="start"/>
 
-	  <!-- system properties to use -->
-	  <property name= "cr" value="${line.separator}"/> 
-		
-	  <!-- set global properties for this build -->
-	
-	  <property name="src"        			location="src"/> 
-	  <property name="classes"        		location="classes"/> 
-	  <property name="lib"        			location="lib"/>
-	  <property name="distrib"        		location="distrib"/>
-	  <property name="libext"     			location="libext"/>
-	  <property name="libswt"     			location="libswt"/>
-	  <property name="deploydir"     		location="WekaScoringDeploy"/>
-          <property name="java_version" value="1.5"/>
-          <property name="debug" value="true"/>
-	
-	  <target name="init" description="create timestamp and directories">
-    	<echo>Init...</echo>
-	  	
-	    <tstamp/>
-	    <mkdir dir="${classes}"/>
-	    <mkdir dir="${lib}"/>
-	    <mkdir dir="${distrib}"/>
-	  </target>
+  <!-- system properties to use -->
+  <property name= "cr" value="${line.separator}"/>
 
-	  <!--
+  <!-- set global properties for this build -->
+
+  <property name="src"        			location="src"/>
+  <property name="classes"        		location="classes"/>
+  <property name="lib"        			location="lib"/>
+  <property name="doc"                          location="docs"/>
+  <property name="dist"                         location="dist"/>
+  <property name="stage"                        location="stage/weka-scoring"/>
+  <property name="libext-ivy"                   location="libext-ivy"/>
+  <property name="libswt"     			location="libswt"/>
+  <property name="java_version" value="1.6"/>
+  <property name="debug" value="true"/>
+  <property name="package.classifier" value="deploy"/>
+  <property name="package.file.path" value="${dist}/${ivy.artifact.id}-${project.revision}-${package.classifier}.zip"/>
+
+  <target name="init" description="create timestamp and directories">
+    <echo>Init...</echo>
+
+    <tstamp/>
+    <mkdir dir="${classes}"/>
+    <mkdir dir="${lib}"/>
+    <mkdir dir="${dist}"/>
+    <mkdir dir="${stage}/lib"/>
+  </target>
+
+  <!--
 	       ==========================
 	            Compile the code
 	       ==========================
 	  -->
 
-	  <target name="compile" depends="init" description="compile the source " >
-	  	<echo>Compiling WekaScoringPlugin Plugin...</echo>
-	    <javac srcdir="${src}" 
+  <target name="compile" depends="init" description="compile the source " >
+    <echo>Compiling WekaScoringPlugin Plugin...</echo>
+    <javac srcdir="${src}" 
 	    	   destdir="${classes}"
                    source="${java_version}"
                    target="${java_version}"
                    debug="${debug}">
 
-	    	<classpath id="cpath">
-				<fileset dir="${libext}" 		includes="*.jar"/>
-				<fileset dir="${libswt}" 		includes="*.jar"/>
-				<fileset dir="${libswt}/win32/" includes="*.jar"/>
-		  		</classpath>
-	    </javac>
-	  </target>
-	
-	  <!-- ==========================
+      <classpath id="cpath">
+        <fileset dir="${libext-ivy}" 		includes="*.jar"/>
+        <fileset dir="${libswt}" 		includes="*.jar"/>
+        <fileset dir="${libswt}/win32/" includes="*.jar"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <!-- ==========================
 	          Copy additional files
 	       ==========================
 	  -->
 
-	  <target name="copy" depends="compile" description="copy images etc to classes directory" >
-	  	<echo>Copying images etc to classes directory...</echo>
-	    <copy todir="${classes}">
-	    	<fileset 
+  <target name="copy" depends="compile" description="copy images etc to classes directory" >
+    <echo>Copying images etc to classes directory...</echo>
+    <copy todir="${classes}">
+      <fileset 
 	    		dir="${src}" 
 	    		includes="**/*.png,**/*.xml,**/*.properties"/>
-	  	    </copy>
-	  </target>
-			
-	  <!--
+    </copy>
+  </target>
+
+  <!--
 	       ==========================
 	                library
 	       ==========================
 	  -->
-		
-	  <target name="scoring" depends="compile, copy" description="generate the weka scoring plugin library scoring.jar">
-	  	<echo>Generating the Kettle library scoring.jar ...</echo>
-	  	<jar 
-	    	jarfile="${lib}/scoring.jar" 
-	    	basedir="${classes}" 
-	    	includes="**/*"/>	 
-	  </target>
 
-	  <!--
+  <target name="scoring" depends="compile, copy" description="generate the weka scoring plugin library scoring.jar">
+    <echo>Generating the Kettle library scoring.jar ...</echo>
+    <jar 
+	    	jarfile="${lib}/${ivy.artifact.id}-${project.revision}.jar" 
+	    	basedir="${classes}" 
+	    	includes="**/*"/>
+  </target>
+
+  <!--
 	       ==========================
 	           distrib for plugin
 	       ==========================
 	  -->
 
-	  <target name="distrib" depends="scoring" description="Create the distribution package..." >
-	  	<echo>Copying libraries to distrib directory...</echo>
-	    <copy todir="${distrib}">
-	    	<fileset 
+  <target name="stage" depends="scoring" description="Stage files" >
+    <echo>Staging jar and libraries.</echo>
+    <copy todir="${stage}">
+      <fileset 
 	    		dir="${lib}" 
 	    		includes="**/*.jar"/>
-	    	<fileset 
-	    		dir="${libext}" 
-	    		includes="**/xstream*.jar"/>
-	    	<fileset 
-	    		dir="${libext}" 
-	    		includes="**/xpp3*.jar"/>
-	  	    </copy>
-	  </target>
+    </copy>
+    <copy file="${libext-ivy}/pdm-${dependency.weka.revision}.jar"
+                  todir="${stage}/lib"/>
+    <copy file="${libext-ivy}/dm-commons-${dependency.dm-commons.revision}.jar"
+                  todir="${stage}/lib"/>
+    <copy file="${libext-ivy}/xstream-${dependency.xstream.revision}.jar"
+                  todir="${stage}/lib"/>
+    <copy file="${libext-ivy}/xpp3_min-${dependency.xpp3-min.revision}.jar"
+                  todir="${stage}/lib"/>
+  </target>
 
-	  <!--
+  <!--
 	       ==========================
 	            deploy to Kettle
 	       ==========================
 	  -->
 
-	  <target name="deploy" depends="distrib" description="Deploy distribution..." >
-	  	<echo>deploying plugin...</echo>
-	    <copy todir="${deploydir}">
-	    	<fileset 
-	    		dir="${distrib}" 
-	    		includes="**/*.*"/>
-	  	    </copy>
-	  </target>
+  <target name="deploy" depends="stage" description="Deploy distribution..." >
+    <echo>Deploying plugin...</echo>
+    <zip destfile="${package.file.path}" basedir="stage" includes="weka-scoring/** README.txt LICENSE*"/>
+    <zip destfile="${dist}/${ivy.artifact.id}-${project.revision}-src.zip" basedir="${src}"/>
+    <zip destfile="${dist}/docsAndData-${project.revision}.zip" basedir="." includes="docs/**/*"/>
+  </target>
 
-	<!--
+  <!--
 	       ==========================
 	          Default target: all
 	       ==========================
 	  -->
-	<target name="default" depends="deploy" description="default = build all"/>
+  <target name="default" depends="deploy" description="default = build all"/>
 
-	<!--
+  <!--
 	       ==========================
 	              C L E A N
 	       ==========================
 	  -->
 
-	  <target name="clean"  description="clean up generated files" >
-	    <delete dir="${classes}"/>
-	    <delete dir="${lib}"/>
-	  </target>
-	
+  <target name="clean"  description="clean up generated files" >
+    <delete dir="${classes}"/>
+    <delete dir="${lib}"/>
+    <delete dir="${dist}"/>
+    <delete dir="stage"/>
+  </target>
+
+  <!-- ================================================
+	           Maven Deploy Hack for deplyment package
+	      =============================================== -->
+
+  <!-- Set the os property -->
+  <condition property="isLinux">
+    <os family="unix" />
+  </condition>
+  <condition property="isWindows">
+    <os family="windows" />
+  </condition>
+  <condition property="isMac">
+    <os family="mac" />
+  </condition>
+
+  <!-- Maven deploy commmand line conditional executors for Windows and not Windows -->
+  <target name="publishWindows" if="isWindows">
+    <echo message="Doing maven deploy for Windows..." />
+    <exec executable="cmd" failonerror="true">
+      <arg value="/c" />
+      <arg value="mvn.bat" />
+      <arg value="deploy:deploy-file" />
+      <arg value="-DrepositoryId=${ivy.repository.id}" />
+      <arg value="-Durl=${ivy.repository.publish}" />
+      <arg value="-DgroupId=${ivy.artifact.group}" />
+      <arg value="-DartifactId=${ivy.artifact.id}" />
+      <arg value="-Dversion=${project.revision}" />
+      <arg value="-Dpackaging=zip" />
+      <arg value="-Dclassifier=${package.classifier}" />
+      <arg value="-Dfile=${package.file.path}" />
+      <arg value="-DgeneratePom=false" />
+    </exec>
+  </target>
+
+  <target name="publishUnix" unless="isWin">
+    <echo message="Doing maven deploy for Nix..." />
+    <exec executable="mvn" failonerror="true">
+      <arg value="deploy:deploy-file" />
+      <arg value="-DrepositoryId=${ivy.repository.id}" />
+      <arg value="-Durl=${ivy.repository.publish}" />
+      <arg value="-DgroupId=${ivy.artifact.group}" />
+      <arg value="-DartifactId=${ivy.artifact.id}" />
+      <arg value="-Dversion=${project.revision}" />
+      <arg value="-Dpackaging=zip" />
+      <arg value="-Dclassifier=${package.classifier}" />
+      <arg value="-Dfile=${package.file.path}" />
+      <arg value="-DgeneratePom=false" />
+    </exec>
+  </target>
+
+  <!-- Publish target to run the conditional deployment -->
+  <target name="publish" depends="publishWindows, publishUnix, subfloor.publish">
+  </target>
+
 </project>
