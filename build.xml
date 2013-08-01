@@ -17,7 +17,7 @@
   <property name="lib"        			location="lib"/>
   <property name="doc"                          location="docs"/>
   <property name="dist"                         location="dist"/>
-  <property name="stage"                        location="stage/WekaScoring"/>
+  <property name="stage"                        location="stage/weka-scoring"/>
   <property name="libext-ivy"                   location="libext-ivy"/>
   <property name="libswt"     			location="libswt"/>
   <property name="java_version" value="1.6"/>
@@ -116,7 +116,7 @@
 
   <target name="deploy" depends="stage" description="Deploy distribution..." >
     <echo>Deploying plugin...</echo>
-    <zip destfile="${package.file.path}" basedir="stage" includes="WekaScoring/** README.txt LICENSE*"/>
+    <zip destfile="${package.file.path}" basedir="stage" includes="weka-scoring/** README.txt LICENSE*"/>
     <zip destfile="${dist}/${ivy.artifact.id}-${project.revision}-src.zip" basedir="${src}"/>
     <zip destfile="${dist}/docsAndData-${project.revision}.zip" basedir="." includes="docs/**/*"/>
   </target>
