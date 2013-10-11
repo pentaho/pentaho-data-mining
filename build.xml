@@ -32,6 +32,7 @@
 	    <mkdir dir="${lib}"/>
 	    <mkdir dir="${dist}"/>
 	    <mkdir dir="${stage}/lib"/>
+	    <mkdir dir="${devlib.dir}"/>
 	  </target>
 
 	  <!--
