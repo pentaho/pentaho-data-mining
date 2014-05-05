@@ -181,10 +181,6 @@ public class WekaScoringDialog extends BaseStepDialog implements
    * @return the step name
    */
   public String open() {
-
-    // Make sure that all Weka packages have been loaded!
-    weka.core.WekaPackageManager.loadPackages(false);
-
     Shell parent = getParent();
     Display display = parent.getDisplay();
 

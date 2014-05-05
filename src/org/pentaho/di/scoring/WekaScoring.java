@@ -203,7 +203,6 @@ public class WekaScoring extends BaseStep implements StepInterface {
     Object[] r = getRow();
 
     if (r == null) {
-
       if (m_data.getModel().isBatchPredictor()
           && !m_meta.getFileNameFromField() && m_batch.size() > 0) {
         try {
@@ -258,9 +257,6 @@ public class WekaScoring extends BaseStep implements StepInterface {
     // Handle the first row
     if (first) {
       first = false;
-
-      // make sure that all Weka packages have been loaded!
-      weka.core.WekaPackageManager.loadPackages(false);
 
       m_data.setOutputRowMeta(getInputRowMeta().clone());
       if (m_meta.getFileNameFromField()) {
