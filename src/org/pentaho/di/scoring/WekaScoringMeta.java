@@ -496,10 +496,6 @@ public class WekaScoringMeta extends BaseStepMeta implements StepMetaInterface {
    */
   public void loadXML(Node stepnode, List<DatabaseMeta> databases,
       Map<String, Counter> counters) throws KettleXMLException {
-
-    // Make sure that all Weka packages have been loaded
-    weka.core.WekaPackageManager.loadPackages(false);
-
     int nrModels = XMLHandler.countNodes(stepnode, XML_TAG);
 
     if (nrModels > 0) {
@@ -634,10 +630,6 @@ public class WekaScoringMeta extends BaseStepMeta implements StepMetaInterface {
   public void readRep(Repository rep, ObjectId id_step,
       List<DatabaseMeta> databases, Map<String, Counter> counters)
       throws KettleException {
-
-    // Make sure that all Weka packages have been loaded
-    weka.core.WekaPackageManager.loadPackages(false);
-
     m_fileNameFromField = rep.getStepAttributeBoolean(id_step, 0,
         "file_name_from_field"); //$NON-NLS-1$
 
