@@ -63,7 +63,7 @@ import weka.core.SerializedObject;
  * 
  * @author Mark Hall (mhall{[at]}pentaho{[dot]}org)
  */
-@Step(id = "WekaScoring", image = "WS.png", name = "Weka Scoring",
+@Step(id = "WekaScoring", image = "WEKAS.svg", name = "Weka Scoring",
   description = "Appends predictions from a pre-built Weka model", categoryDescription = "Data Mining",
   documentationUrl = "http://wiki.pentaho.com/display/DATAMINING/Using+the+Weka+Scoring+Plugin")
 public class WekaScoringMeta extends BaseStepMeta implements StepMetaInterface {
