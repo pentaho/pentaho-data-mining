@@ -27,6 +27,7 @@ public class WekaScoringLifecycleListener implements KettleLifecycleListener {
 
   @Override
   public void onEnvironmentInit() throws LifecycleException {
+    System.setProperty("weka.core.logging.Logger", "weka.core.logging.ConsoleLogger"); 
     weka.core.WekaPackageManager.loadPackages( false );
   }
 
