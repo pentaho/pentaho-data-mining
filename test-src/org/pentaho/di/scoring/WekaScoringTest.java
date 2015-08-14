@@ -302,7 +302,7 @@ public class WekaScoringTest {
       } else if (i == 4) {
         assertEquals(rowPlusPreds[4].toString(), "1.0");
       } else {
-        assertEquals(rowPlusPreds[4].toString(), "2.0");
+        assertEquals(rowPlusPreds[4].toString(), "1.0");
       }
     }
   }
