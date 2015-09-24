@@ -54,6 +54,7 @@
   </target>
 
   <target name="assemble" depends="subfloor-pkg.assemble">
+    <replace file="${approot.stage.dir}/version.xml" token="@TRUNK@" value="${project.revision}" />
     <delete>
       <fileset dir="${approot.stage.dir}" includes="**/.gitignore"/>
     </delete>
