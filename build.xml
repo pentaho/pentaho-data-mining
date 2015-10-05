@@ -103,6 +103,11 @@
                   todir="${stage}/lib"/>
             <copy file="${libext-ivy}/dm-commons-${dependency.dm-commons.revision}.jar"
                   todir="${stage}/lib"/>
+            <!-- Update the version.xml with the current version of this plugin -->
+            <copy todir="${stage}">
+	            <fileset dir="res" includes="**/*" excludes="**/.vpn" />
+            </copy>
+            <replace file="${stage}/version.xml" token="@TRUNK@" value="${project.revision}" />
           </target>
 
 	  <!--
