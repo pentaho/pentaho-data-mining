@@ -8,12 +8,12 @@
 	  <tstamp prefix="start"/>
 
 	  <!-- system properties to use -->
-	  <property name= "cr" value="${line.separator}"/> 
-		
+	  <property name= "cr" value="${line.separator}"/>
+
 	  <!-- set global properties for this build -->
-	
-	  <property name="src"        			location="src"/> 
-	  <property name="classes"        		location="classes"/> 
+
+	  <property name="src"        			location="src"/>
+	  <property name="classes"        		location="classes"/>
 	  <property name="lib"        			location="lib"/>
           <property name="stage"                        location="stage/arff-output"/>
           <property name="dist"                         location="dist"/>
@@ -23,10 +23,10 @@
           <property name="debug" value="true"/>
   <property name="package.classifier" value="deploy"/>
   <property name="package.file.path" value="${dist}/${ivy.artifact.id}-${project.revision}-${package.classifier}.zip"/>
-  
+
 	  <target name="init" description="create timestamp and directories">
     	<echo>Init...</echo>
-	  	
+
 	    <tstamp/>
 	    <mkdir dir="${classes}"/>
 	    <mkdir dir="${lib}"/>
@@ -43,7 +43,7 @@
 
 	  <target name="compile" depends="init" description="compile the source " >
 	  	<echo>Compiling ArffOutputPlugin Plugin...</echo>
-	    <javac srcdir="${src}" 
+	    <javac srcdir="${src}"
 	    	   destdir="${classes}"
                    source="${java_version}"
                    target="${java_version}"
@@ -56,7 +56,7 @@
 		</classpath>
 	    </javac>
 	  </target>
-	
+
 	  <!-- ==========================
 	          Copy additional files
 	       ==========================
@@ -65,24 +65,24 @@
 	  <target name="copy" depends="compile" description="copy images etc to classes directory" >
 	  	<echo>Copying images etc to classes directory...</echo>
 	    <copy todir="${classes}">
-	    	<fileset 
-	    		dir="${src}" 
+	    	<fileset
+	    		dir="${src}"
 	    		includes="**/*.png,**/*.svg,**/*.xml,**/*.properties"/>
 	  	    </copy>
 	  </target>
-			
+
 	  <!--
 	       ==========================
 	                library
 	       ==========================
 	  -->
-		
+
 	  <target name="arffoutput" depends="compile, copy" description="generate the arff output plugin library arffoutput.jar">
 	  	<echo>Generating the Kettle library arffoutput.jar ...</echo>
-	  	<jar 
-	    	jarfile="${lib}/${ivy.artifact.id}-${project.revision}.jar" 
-	    	basedir="${classes}" 
-	    	includes="**/*"/>	 
+	  	<jar
+	    	jarfile="${lib}/${ivy.artifact.id}-${project.revision}.jar"
+	    	basedir="${classes}"
+	    	includes="**/*"/>
 	  </target>
 
 	  <!--
@@ -95,11 +95,11 @@
           <target name="stage" depends="arffoutput" description="Stage files" >
                 <echo>Staging jar and libraries.</echo>
             <copy todir="${stage}">
-                <fileset 
-                        dir="${lib}" 
+                <fileset
+                        dir="${lib}"
                         includes="**/*.jar"/>
                 </copy>
-            <copy file="${libext-ivy}/pdm-3.7-ce-${dependency.weka.revision}.jar"
+            <copy file="${libext-ivy}/pdm-ce-${dependency.weka.revision}.jar"
                   todir="${stage}/lib"/>
             <copy file="${libext-ivy}/dm-commons-${dependency.dm-commons.revision}.jar"
                   todir="${stage}/lib"/>
@@ -140,7 +140,7 @@
 	    <delete dir="${lib}"/>
 	    <delete dir="stage"/>
 	  </target>
-  
+
   <!-- ================================================
              Maven Deploy Hack for deplyment package
         =============================================== -->
@@ -194,5 +194,5 @@
   <!-- Publish target to run the conditional deployment -->
   <target name="publish" depends="publishWindows, publishUnix, subfloor.publish">
   </target>
-	
+
 </project>
