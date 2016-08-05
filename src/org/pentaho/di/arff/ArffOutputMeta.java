@@ -52,7 +52,8 @@ import org.w3c.dom.Node;
  * @author Mark Hall (mhall{[at]}pentaho.org)
  * @version 1.0
  */
-@Step(id = "ArffOutput", image = "ARFF.svg", name = "Arff Output", description = "Writes data in ARFF format to a file", categoryDescription = "Data Mining")
+@Step(id = "ArffOutput", image = "ARFF.svg", name = "Arff Output", description = "Writes data in ARFF format to a file",
+    documentationUrl = "http://wiki.pentaho.com/display/EAI/ARFF+Output", categoryDescription = "Data Mining")
 public class ArffOutputMeta extends BaseStepMeta implements StepMetaInterface {
 
   protected static Class<?> PKG = ArffOutputMeta.class;
