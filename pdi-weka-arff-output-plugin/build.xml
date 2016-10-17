@@ -1,0 +1,198 @@
+<project name="ArffOutputPlugin" default="default" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+  <import file="build-res/subfloor.xml"/>
+
+	  <description>
+	      ArffOutputPlugin plugin build file
+	    </description>
+
+	  <tstamp prefix="start"/>
+
+	  <!-- system properties to use -->
+	  <property name= "cr" value="${line.separator}"/> 
+		
+	  <!-- set global properties for this build -->
+	
+	  <property name="src"        			location="src"/> 
+	  <property name="classes"        		location="classes"/> 
+	  <property name="lib"        			location="lib"/>
+          <property name="stage"                        location="stage/arff-output"/>
+          <property name="dist"                         location="dist"/>
+	  <property name="libswt"     			location="libswt"/>
+          <property name="libext-ivy"                   location="libext-ivy"/>
+          <property name="java_version" value="1.6"/>
+          <property name="debug" value="true"/>
+  <property name="package.classifier" value="deploy"/>
+  <property name="package.file.path" value="${dist}/${ivy.artifact.id}-${project.revision}-${package.classifier}.zip"/>
+  
+	  <target name="init" description="create timestamp and directories">
+    	<echo>Init...</echo>
+	  	
+	    <tstamp/>
+	    <mkdir dir="${classes}"/>
+	    <mkdir dir="${lib}"/>
+	    <mkdir dir="${dist}"/>
+	    <mkdir dir="${stage}/lib"/>
+	    <mkdir dir="${devlib.dir}"/>
+	  </target>
+
+	  <!--
+	       ==========================
+	            Compile the code
+	       ==========================
+	  -->
+
+	  <target name="compile" depends="init" description="compile the source " >
+	  	<echo>Compiling ArffOutputPlugin Plugin...</echo>
+	    <javac srcdir="${src}" 
+	    	   destdir="${classes}"
+                   source="${java_version}"
+                   target="${java_version}"
+                   debug="${debug}">
+
+	    	<classpath id="classpath">
+                  <fileset dir="${libext-ivy}"            includes="*.jar"/>
+		  <fileset dir="${libswt}" 		includes="*.jar"/>
+		  <fileset dir="${libswt}/win32/" includes="*.jar"/>
+		</classpath>
+	    </javac>
+	  </target>
+	
+	  <!-- ==========================
+	          Copy additional files
+	       ==========================
+	  -->
+
+	  <target name="copy" depends="compile" description="copy images etc to classes directory" >
+	  	<echo>Copying images etc to classes directory...</echo>
+	    <copy todir="${classes}">
+	    	<fileset 
+	    		dir="${src}" 
+	    		includes="**/*.png,**/*.svg,**/*.xml,**/*.properties"/>
+	  	    </copy>
+	  </target>
+			
+	  <!--
+	       ==========================
+	                library
+	       ==========================
+	  -->
+		
+	  <target name="arffoutput" depends="compile, copy" description="generate the arff output plugin library arffoutput.jar">
+	  	<echo>Generating the Kettle library arffoutput.jar ...</echo>
+	  	<jar 
+	    	jarfile="${lib}/${ivy.artifact.id}-${project.revision}.jar" 
+	    	basedir="${classes}" 
+	    	includes="**/*"/>	 
+	  </target>
+
+	  <!--
+	       ==========================
+	           distrib for plugin
+	       ==========================
+	  -->
+
+
+          <target name="stage" depends="arffoutput" description="Stage files" >
+                <echo>Staging jar and libraries.</echo>
+            <copy todir="${stage}">
+                <fileset 
+                        dir="${lib}" 
+                        includes="**/*.jar"/>
+                </copy>
+            <copy file="${libext-ivy}/pdm-3.7-ce-${dependency.weka.revision}.jar"
+                  todir="${stage}/lib"/>
+            <copy file="${libext-ivy}/dm-commons-${dependency.dm-commons.revision}.jar"
+                  todir="${stage}/lib"/>
+            <!-- Update the version.xml with the current version of this plugin -->
+            <copy todir="${stage}">
+	            <fileset dir="res" includes="**/*" excludes="**/.vpn" />
+            </copy>
+            <replace file="${stage}/version.xml" token="@TRUNK@" value="${project.revision}" />
+          </target>
+
+	  <!--
+	       ==========================
+	            deploy to Kettle
+	       ==========================
+	  -->
+
+          <target name="deploy" depends="stage" description="Deploy distribution..." >
+                <echo>Deploying plugin...</echo>
+            <zip destfile="${package.file.path}" basedir="stage" includes="arff-output/** README.txt LICENSE*"/>
+            <zip destfile="${dist}/${ivy.artifact.id}-${project.revision}-src.zip" basedir="${src}"/>
+          </target>
+
+	<!--
+	       ==========================
+	          Default target: all
+	       ==========================
+	  -->
+	<target name="default" depends="deploy" description="default = build all"/>
+
+	<!--
+	       ==========================
+	              C L E A N
+	       ==========================
+	  -->
+
+	  <target name="clean"  description="clean up generated files" >
+	    <delete dir="${classes}"/>
+	    <delete dir="${lib}"/>
+	    <delete dir="stage"/>
+	  </target>
+  
+  <!-- ================================================
+             Maven Deploy Hack for deplyment package
+        =============================================== -->
+
+  <!-- Set the os property -->
+  <condition property="isLinux">
+    <os family="unix" />
+  </condition>
+  <condition property="isWindows">
+    <os family="windows" />
+  </condition>
+  <condition property="isMac">
+    <os family="mac" />
+  </condition>
+
+  <!-- Maven deploy commmand line conditional executors for Windows and not Windows -->
+  <target name="publishWindows" if="isWindows">
+    <echo message="Doing maven deploy for Windows..." />
+    <exec executable="cmd" failonerror="true">
+      <arg value="/c" />
+      <arg value="mvn.bat" />
+      <arg value="deploy:deploy-file" />
+      <arg value="-DrepositoryId=${ivy.repository.id}" />
+      <arg value="-Durl=${ivy.repository.publish}" />
+      <arg value="-DgroupId=${ivy.artifact.group}" />
+      <arg value="-DartifactId=${ivy.artifact.id}" />
+      <arg value="-Dversion=${project.revision}" />
+      <arg value="-Dpackaging=zip" />
+      <arg value="-Dclassifier=${package.classifier}" />
+      <arg value="-Dfile=${package.file.path}" />
+      <arg value="-DgeneratePom=false" />
+    </exec>
+  </target>
+
+  <target name="publishUnix" unless="isWin">
+    <echo message="Doing maven deploy for Nix..." />
+    <exec executable="mvn" failonerror="true">
+      <arg value="deploy:deploy-file" />
+      <arg value="-DrepositoryId=${ivy.repository.id}" />
+      <arg value="-Durl=${ivy.repository.publish}" />
+      <arg value="-DgroupId=${ivy.artifact.group}" />
+      <arg value="-DartifactId=${ivy.artifact.id}" />
+      <arg value="-Dversion=${project.revision}" />
+      <arg value="-Dpackaging=zip" />
+      <arg value="-Dclassifier=${package.classifier}" />
+      <arg value="-Dfile=${package.file.path}" />
+      <arg value="-DgeneratePom=false" />
+    </exec>
+  </target>
+
+  <!-- Publish target to run the conditional deployment -->
+  <target name="publish" depends="publishWindows, publishUnix, subfloor.publish">
+  </target>
+	
+</project>
