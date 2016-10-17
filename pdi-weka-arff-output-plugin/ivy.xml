@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+    <info organisation="${ivy.artifact.group}" module="${ivy.artifact.id}" revision="${project.revision}" />
+    
+    <configurations>
+        <conf name="default"/>
+        <conf name="test" visibility="private"/>
+        <conf name="source" />          
+    </configurations>
+    
+    <publications>
+            <artifact name="${ivy.artifact.id}" type="jar" conf="default"/>
+            <artifact name="${ivy.artifact.id}" m:classifier="sources" type="source" ext="jar" conf="source"/>
+    </publications>   
+    
+    <dependencies defaultconf="default->default">
+        <!-- this is an example dependency.  Add the dependencies for your project here -->
+    <dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="pentaho-kettle" name="kettle-ui-swt" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="pentaho.weka" name="pdm-3.7-ce" rev="${dependency.weka.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="dm-commons" name="dm-commons" rev="${dependency.dm-commons.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="org.apache.commons" name="commons-vfs2" rev="2.1-20150824" transitive="false" />
+
+<!--        <dependency org="commons-logging" name="commons-logging" rev="1.1" transitive="false"/> -->
+    </dependencies>
+</ivy-module>
