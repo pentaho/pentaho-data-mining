@@ -1,0 +1,62 @@
+<project name="dm-commons" default="default" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+  <property name="bin.dir" value="${basedir}/bin"/>
+  <property name="stage.dir" value="${bin.dir}/stage"/>
+  <property name="approot.stage.dir" value="${stage.dir}/dm-commons"/>
+  <import file="build-res/subfloor-pkg.xml"/>
+
+  <description>
+    dm-commons library
+  </description>
+
+  <!-- Setup the compile classpath -->
+  <path id="classpath">
+    <fileset dir="${devlib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+    <fileset dir="${lib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+    <fileset dir="${provided.lib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+
+  <!-- Setup the classpath used for testing -->
+  <path id="test.classpath">
+    <pathelement path="${testclasses.dir}" />
+    <pathelement path="${classes.dir}" />
+    <fileset dir="${devlib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+    <fileset dir="${testlib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+    <fileset dir="${lib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+    <fileset dir="${provided.lib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+
+  <target name="clean-jars" depends="subfloor.clean-jars">
+    <delete dir="${swt.lib.dir}"/>
+    <delete dir="${provided.lib.dir}"/>
+  </target>
+
+  <target name="resolve" depends="subfloor.resolve">
+    <ivy:resolve file="${ivyfile}" conf="provided" />
+    <ivy:retrieve conf="provided" pattern="${provided.lib.dir}/[module]-[revision](-[classifier]).[ext]" symlink="${ivy.use.symlinks.internal}" /> 
+  </target>
+
+  <target name="assemble.copy-libs" depends="subfloor-pkg.assemble.copy-libs">
+    <move file="${approot.stage.dir}/lib/${ivy.artifact.id}-${project.revision}.jar" tofile="${approot.stage.dir}/${ivy.artifact.id}-${project.revision}.jar"/>
+  </target>
+
+  <target name="assemble" depends="subfloor-pkg.assemble">
+    <replace file="${approot.stage.dir}/version.xml" token="@TRUNK@" value="${project.revision}" />
+    <delete>
+      <fileset dir="${approot.stage.dir}" includes="**/.gitignore"/>
+    </delete>
+  </target>
+</project>
