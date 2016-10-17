@@ -1,0 +1,7 @@
+dm-commons/bin/
+dm-commons/lib-provided/kettle-engine-7.0-SNAPSHOT.jar
+dm-commons/lib-provided/
+dm-commons/dist/
+dm-commons/lib/
+dm-commons/test-lib/
+dm-commons/package-pom.xml
