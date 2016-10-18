@@ -22,7 +22,7 @@
     <dependency org="pentaho-kettle" name="kettle-ui-swt" rev="${dependency.kettle.revision}" transitive="true" conf="provided->default" changing="true" />
     <dependency org="pentaho" name="metastore" rev="${dependency.pentaho-metastore.revision}" conf="provided->default" changing="true" />
     <dependency org="pentaho.weka" name="pdm-3.7-ce" rev="${dependency.weka.revision}" transitive="false" conf="default->default" changing="true" />
-    <dependency org="dm-commons" name="dm-commons" rev="${dependency.dm-commons.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="pentaho.weka" name="dm-commons" rev="${dependency.dm-commons.revision}" transitive="false" conf="default->default" changing="true" />
     <dependency org="xpp3" name="xpp3_min" rev="${dependency.xpp3-min.revision}" transitive="false" conf="default->default" changing="false"/>
     <dependency org="pentaho" name="pentaho-vfs-browser" rev="${dependency.pentaho-vfs-browser.revision}" transitive="false" conf="provided->default" changing="true" />
 

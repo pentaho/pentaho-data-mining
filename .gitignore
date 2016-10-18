@@ -1,0 +1,14 @@
+bin/
+dist/
+lib/
+classes/
+dev-lib/
+test-lib/
+lib-provided/
+stage/
+.classpath
+.project
+*.class
+*.jar
+*.iml
+package-pom.xml
