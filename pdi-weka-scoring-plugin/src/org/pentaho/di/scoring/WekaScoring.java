@@ -349,6 +349,7 @@ public class WekaScoring extends BaseStep implements StepInterface {
               m_batchScoringSize = Integer.parseInt( modelPreferred );
               sizeOk = true;
             } catch ( NumberFormatException e ) {
+              // ignore
             }
           }
 
