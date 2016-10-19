@@ -197,6 +197,6 @@ class WekaScoringClassifier extends WekaScoringModel {
    * predictions in a batch
    */
   public boolean isBatchPredictor() {
-    return (m_model instanceof BatchPredictor);
+      return ( m_model instanceof BatchPredictor && ( ( ( (BatchPredictor) m_model ).implementsMoreEfficientBatchPrediction() ) ) );
   }
 }
