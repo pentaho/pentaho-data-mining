@@ -13,7 +13,7 @@
 * See the GNU General Public License for more details.
 *
 *
-* Copyright 2006 - 2013 Pentaho Corporation.  All rights reserved.
+* Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
 */
 
 package org.pentaho.di.scoring;
@@ -25,14 +25,12 @@ import org.pentaho.di.core.lifecycle.LifecycleException;
 @KettleLifecyclePlugin( id = "WekaScoringLifecycleListener", name = "WekaScoringLifecycleListener" )
 public class WekaScoringLifecycleListener implements KettleLifecycleListener {
 
-  @Override
-  public void onEnvironmentInit() throws LifecycleException {
-    System.setProperty("weka.core.logging.Logger", "weka.core.logging.ConsoleLogger"); 
+  @Override public void onEnvironmentInit() throws LifecycleException {
+    System.setProperty( "weka.core.logging.Logger", "weka.core.logging.ConsoleLogger" );
     weka.core.WekaPackageManager.loadPackages( false );
   }
 
-  @Override
-  public void onEnvironmentShutdown() {
+  @Override public void onEnvironmentShutdown() {
     // Noop
   }
 

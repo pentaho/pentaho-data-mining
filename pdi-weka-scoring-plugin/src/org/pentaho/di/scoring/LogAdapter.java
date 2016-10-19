@@ -13,7 +13,7 @@
 * See the GNU General Public License for more details.
 *
 *
-* Copyright 2006 - 2013 Pentaho Corporation.  All rights reserved.
+* Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
 */
 
 package org.pentaho.di.scoring;
@@ -26,7 +26,7 @@ import weka.gui.Logger;
 
 /**
  * Adapts Kettle logging to Weka's Logger interface
- * 
+ *
  * @author Mark Hall (mhall{[at]}pentaho{[dot]}org)
  * @version $Revision: 1.0 $
  */
@@ -39,15 +39,15 @@ public class LogAdapter implements Serializable, Logger {
 
   private transient LogChannelInterface m_log;
 
-  public LogAdapter(LogChannelInterface log) {
+  public LogAdapter( LogChannelInterface log ) {
     m_log = log;
   }
 
-  public void statusMessage(String message) {
-    m_log.logDetailed(message);
+  public void statusMessage( String message ) {
+    m_log.logDetailed( message );
   }
 
-  public void logMessage(String message) {
-    m_log.logBasic(message);
+  public void logMessage( String message ) {
+    m_log.logBasic( message );
   }
 }
