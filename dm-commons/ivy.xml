@@ -20,7 +20,7 @@
     <dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" transitive="false" conf="provided->default" changing="true" />
     <dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}" transitive="false" conf="provided->default" changing="true" />
 
-    <dependency org="pentaho.weka" name="pdm-ce" rev="${dependency.weka.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="pentaho.weka" name="pdm-3.7-ce" rev="${dependency.weka.revision}" transitive="false" conf="default->default" changing="true" />
 
     <dependency org="junit" name="junit" rev="4.5" conf="test->default" />
     <dependency org="log4j" name="log4j" rev="1.2.14" conf="test->default" />
