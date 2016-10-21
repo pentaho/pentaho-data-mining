@@ -7,5 +7,4 @@ test-lib/
 libext-ivy/
 pdi-weka-scoring-plugin/package-pom.xml
 dm-commons/package-pom.xml
-dm-commons/package-ivy.xml
 *.iml
