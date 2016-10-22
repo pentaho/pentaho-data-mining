@@ -1,0 +1,15 @@
+bin/
+dist/
+lib/
+classes/
+dev-lib/
+test-lib/
+stage/
+.classpath
+.project
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+package-pom.xml
