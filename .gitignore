@@ -13,9 +13,11 @@ pdi-weka-scoring-plugin/dist/
 pdi-weka-arff-output-plugin/dist/
 pdi-weka-arff-output-plugin/libext-ivy/
 pdi-weka-arff-output-plugin/classes/
+pdi-weka-arff-output-plugin/bin/
 pdi-weka-scoring-plugin/test-lib/
 pdi-weka-arff-output-plugin/lib/
 pdi-weka-arff-output-plugin/pdi-weka-arff-output-plugin.iml
 pdi-weka-scoring-plugin/lib/
 pdi-weka-scoring-plugin/package-pom.xml
 pdi-weka-scoring-plugin/pdi-weka-scoring-plugin.iml
+.idea

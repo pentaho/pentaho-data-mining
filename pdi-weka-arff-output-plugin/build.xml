@@ -24,17 +24,6 @@
   <property name="package.classifier" value="deploy"/>
   <property name="package.file.path" value="${dist}/${ivy.artifact.id}-${project.revision}-${package.classifier}.zip"/>
 
-	  <target name="init" description="create timestamp and directories">
-    	<echo>Init...</echo>
-
-	    <tstamp/>
-	    <mkdir dir="${classes}"/>
-	    <mkdir dir="${lib}"/>
-	    <mkdir dir="${dist}"/>
-	    <mkdir dir="${stage}/lib"/>
-	    <mkdir dir="${devlib.dir}"/>
-	  </target>
-
 	  <!--
 	       ==========================
 	            Compile the code
@@ -50,10 +39,8 @@
                    debug="${debug}">
 
 	    	<classpath id="classpath">
-                  <fileset dir="${libext-ivy}"            includes="*.jar"/>
-		  <fileset dir="${libswt}" 		includes="*.jar"/>
-		  <fileset dir="${libswt}/win32/" includes="*.jar"/>
-		</classpath>
+          <fileset dir="${libext-ivy}"            includes="*.jar"/>
+		    </classpath>
 	    </javac>
 	  </target>
 
@@ -139,6 +126,7 @@
 	    <delete dir="${classes}"/>
 	    <delete dir="${lib}"/>
 	    <delete dir="stage"/>
+      <delete dir="${bin.dir}"/>
 	  </target>
 
   <!-- ================================================
