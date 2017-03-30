@@ -15,18 +15,12 @@
 
     <dependencies defaultconf="default->default">
         <!-- this is an example dependency.  Add the dependencies for your project here -->
-        <dependency org="org.eclipse.core" name="commands" rev="${dependency.commands.revision}" transitive="false"/>
-        <dependency org="org.eclipse"      name="jface" rev="${dependency.jface.revision}"       transitive="false"/>
-        <dependency org="org.eclipse.core" name="runtime" rev="${dependency.runtime.revision}"   transitive="false"/>
-        <dependency org="org.eclipse.equinox" name="common" rev="${dependency.runtime.revision}"   transitive="false"/>
-        <dependency org="org.eclipse.swt" name="org.eclipse.swt.win32.win32.x86_64" rev="${dependency.swt.revision}"   transitive="false"/>
-
-        <dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
-        <dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
-        <dependency org="pentaho-kettle" name="kettle-ui-swt" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
-        <dependency org="pentaho.weka" name="pdm-ce" rev="${dependency.weka.revision}" transitive="false" conf="default->default" changing="true" />
-        <dependency org="pentaho.weka" name="dm-commons" rev="${dependency.dm-commons.revision}" transitive="false" conf="default->default" changing="true" />
-        <dependency org="org.apache.commons" name="commons-vfs2" rev="2.1-20150824" transitive="false" />
+    <dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="pentaho-kettle" name="kettle-ui-swt" rev="${dependency.kettle.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="pentaho.weka" name="pdm-ce" rev="${dependency.weka.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="pentaho.weka" name="dm-commons" rev="${dependency.dm-commons.revision}" transitive="false" conf="default->default" changing="true" />
+    <dependency org="org.apache.commons" name="commons-vfs2" rev="2.1-20150824" transitive="false" />
 
 <!--        <dependency org="commons-logging" name="commons-logging" rev="1.1" transitive="false"/> -->
     </dependencies>
