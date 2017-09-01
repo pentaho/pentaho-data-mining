@@ -7,6 +7,7 @@
         <conf name="provided"/>
         <conf name="test" visibility="private"/>
         <conf name="source" />
+	<conf name="swtlibs" />
     </configurations>
 
     <publications>
@@ -30,6 +31,9 @@
     <dependency org="log4j" name="log4j" rev="1.2.14" conf="test->default" />
     <dependency org="commons-logging" name="commons-logging" rev="1.1.1" conf="test->default"/>
     <dependency org="org.apache.commons" name="commons-vfs2" rev="2.1-20150824" transitive="false" conf="test->default"/>
+    <dependency org="org.eclipse.swt" name="swtlibs"               rev="4.6" conf="swtlibs->default" transitive="false">
+      <artifact name="swtlibs" type="zip"/>
+    </dependency>
 
 <!--        <dependency org="commons-logging" name="commons-logging" rev="1.1" transitive="false"/> -->
     </dependencies>

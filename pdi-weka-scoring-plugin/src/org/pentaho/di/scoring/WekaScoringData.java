@@ -13,7 +13,7 @@
 * See the GNU General Public License for more details.
 *
 *
-* Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+* Copyright 2006 - 2017 Pentaho Corporation.  All rights reserved.
 */
 
 package org.pentaho.di.scoring;
@@ -47,6 +47,7 @@ import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 import weka.core.Utils;
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
@@ -262,7 +263,7 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
       if ( modelFile.toLowerCase().endsWith( ".gz" ) ) { //$NON-NLS-1$
         stream = new GZIPInputStream( buff );
       }
-      ObjectInputStream oi = new ObjectInputStream( stream );
+      ObjectInputStream oi = SerializationHelper.getObjectInputStream( stream );
 
       model = oi.readObject();
 
@@ -381,7 +382,7 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
    *
    * @param inputMeta  the meta data for the incoming rows
    * @param outputMeta the meta data for the output rows
-   * @param inputRow   the values of the incoming row
+   * @param inputRows  the values of the incoming row
    * @param meta       meta data for this step
    * @return a Kettle row containing all incoming fields along with new ones
    * that hold the prediction(s)
@@ -581,7 +582,7 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
           }
 
           switch ( temp.type() ) {
-            case Attribute.NUMERIC: {
+            case Attribute.NUMERIC:
               if ( fieldType == ValueMetaInterface.TYPE_BOOLEAN ) {
                 Boolean b = tempField.getBoolean( inputVal );
                 if ( b.booleanValue() ) {
@@ -596,9 +597,8 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
                 Double n = tempField.getNumber( inputVal );
                 m_vals[i] = n.doubleValue();
               }
-            }
-            break;
-            case Attribute.NOMINAL: {
+              break;
+            case Attribute.NOMINAL:
               String s = tempField.getString( inputVal );
               // now need to look for this value in the attribute
               // in order to get the correct index
@@ -609,12 +609,11 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
               } else {
                 m_vals[i] = index;
               }
-            }
-            break;
+              break;
             case Attribute.STRING: {
-              String s = tempField.getString( inputVal );
+              String s2 = tempField.getString( inputVal );
               // Set the attribute in the header to contain just this string value
-              temp.setStringValue( s );
+              temp.setStringValue( s2 );
               m_vals[i] = 0.0;
               break;
             }
