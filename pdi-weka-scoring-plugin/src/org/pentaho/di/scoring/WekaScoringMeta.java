@@ -13,7 +13,7 @@
 * See the GNU General Public License for more details.
 *
 *
-* Copyright 2006 - 2017 Pentaho Corporation.  All rights reserved.
+* Copyright 2006 - 201 Pentaho Corporation.  All rights reserved.
 */
 
 package org.pentaho.di.scoring;
@@ -56,6 +56,7 @@ import org.pentaho.di.trans.step.StepMetaInterface;
 import org.w3c.dom.Node;
 
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 import weka.core.SerializedObject;
 
 /**
@@ -606,7 +607,7 @@ public class WekaScoringMeta extends BaseStepMeta implements StepMetaInterface {
 
     // now de-serialize
     ByteArrayInputStream bis = new ByteArrayInputStream( model );
-    ObjectInputStream ois = new ObjectInputStream( bis );
+    ObjectInputStream ois = SerializationHelper.getObjectInputStream( bis );
 
     if ( m_fileNameFromField ) {
       m_defaultModel = (WekaScoringModel) ois.readObject();
