@@ -1,0 +1,3 @@
+dm-commons - LGPL v2.1 - https://raw.githubusercontent.com/pentaho/pentaho-data-mining/master/dm-commons/LICENSE.txt
+pdi-weka-arff-output-plugin - GPL v2 - https://github.com/pentaho/pentaho-data-mining/blob/master/pdi-weka-arff-output-plugin/LICENSE.txt
+pdi-weka-scoring-plugin - GPL v2 - https://raw.githubusercontent.com/pentaho/pentaho-data-mining/master/pdi-weka-scoring-plugin/LICENSE.txt

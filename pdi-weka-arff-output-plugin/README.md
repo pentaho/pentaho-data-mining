@@ -1,19 +1,29 @@
-# dm-commons #
-_DM Commons Library_
+# pentaho-weka-arff-output-plugin #
+_ARFF Output Plugin for Kettle_
 
-DM Commons is a small library containing a metadata class and log adaptor used by WEKA-related PDI plugins.
+The ARFF output plugin allows Kettle data streams to be saved to a
+file in Weka's ARFF format. See docs/ArffOutput.pdf for more
+information.
 
-To install the plugin step simply unzip the
-"WekaScoring-SNAPSHOT-deploy.zip" archive in the plugins/steps
-directory of your PDI installation.
+IMPORTANT:
 
-More information on Weka can be found at:
+This plugin requires Weka to be available as a library. In order to
+compile the code, download either the stable 3.6.x or developer 3.7.x
+version of Weka, unpack the archive and copy the "weka.jar" to
+libext. To deploy the plugin in Kettle, copy the contents of
+ArffOutputDeploy, along with weka.jar, to your Kettle plugins
+directory.
+
+NOTE: Weka >=3.7.1 requires Java 1.6, so Kettle needs to be
+run with a 1.6 or higher JRE.
+
+Weka can be downloaded from
+
+http://www.pentaho.com/download
+
+or
 
 http://www.cs.waikato.ac.nz/ml/weka
-
-and
-
-http://wiki.pentaho.com/display/DATAMINING/Pentaho+Data+Mining+Community+Documentation
 
 * Maven, version 3+
 * Java JDK 1.8
@@ -49,6 +59,7 @@ $ mvn test
 
 If you want to remote debug a single java unit test (default port is 5005):
 ```
+$ cd core
 $ mvn test -Dtest=<<YourTest>> -Dmaven.surefire.debug
 ```
 
