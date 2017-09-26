@@ -16,6 +16,9 @@
     <fileset dir="${lib.dir}">
       <include name="**/*.jar" />
     </fileset>
+    <fileset dir="${swt.lib.dir}/win32">
+      <include name="**/*.jar" />
+    </fileset>
     <fileset dir="${provided.lib.dir}">
       <include name="**/*.jar" />
     </fileset>
@@ -34,6 +37,9 @@
     <fileset dir="${lib.dir}">
       <include name="**/*.jar" />
     </fileset>
+    <fileset dir="${swt.lib.dir}/win32">
+      <include name="**/*.jar" />
+    </fileset>
     <fileset dir="${provided.lib.dir}">
       <include name="**/*.jar" />
     </fileset>
@@ -47,6 +53,10 @@
   <target name="resolve" depends="subfloor.resolve">
     <ivy:resolve file="${ivyfile}" conf="provided" />
     <ivy:retrieve conf="provided" pattern="${provided.lib.dir}/[module]-[revision](-[classifier]).[ext]" symlink="${ivy.use.symlinks.internal}" /> 
+    <ivy:resolve file="${ivyfile}" conf="swtlibs" />
+    <ivy:retrieve conf="swtlibs" pattern="${swt.lib.dir}/swtlibs.zip" symlink="${ivy.use.symlinks.internal}" />
+    <unzip dest="${basedir}" src="${swt.lib.dir}/swtlibs.zip"/>
+    <delete file="${swt.lib.dir}/swtlibs.zip"/>
   </target>
 
   <target name="assemble.copy-libs" depends="subfloor-pkg.assemble.copy-libs">

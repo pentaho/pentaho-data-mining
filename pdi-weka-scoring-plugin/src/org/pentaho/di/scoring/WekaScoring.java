@@ -13,7 +13,7 @@
 * See the GNU General Public License for more details.
 *
 *
-* Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+* Copyright 2006 - 2017 Pentaho Corporation.  All rights reserved.
 */
 
 package org.pentaho.di.scoring;
@@ -155,18 +155,6 @@ public class WekaScoring extends BaseStep implements StepInterface {
   }
 
   private WekaScoringModel setModel( String modelFileName ) throws KettleException {
-
-    /*
-     * String modName = environmentSubstitute(modelFileName); File modelFile =
-     * null; if (modName.startsWith("file:")) { //$NON-NLS-1$ try { modName =
-     * modName.replace(" ", "%20"); //$NON-NLS-1$ //$NON-NLS-2$ modelFile = new
-     * File(new java.net.URI(modName)); } catch (Exception ex) { throw new
-     * KettleException(BaseMessages.getString(WekaScoringMeta.PKG,
-     * "WekaScoring.Error.MalformedURIForModelFile"), ex); //$NON-NLS-1$ } }
-     * else { modelFile = new File(modName); } if (!modelFile.exists()) { throw
-     * new KettleException(BaseMessages.getString(WekaScoringMeta.PKG,
-     * "WekaScoring.Error.NonExistentModelFile", modName)); //$NON-NLS-1$ }
-     */
 
     // Load the model
     WekaScoringModel model = null;
