@@ -1,7 +1,9 @@
-# dm-commons #
-_DM Commons Library_
+# pentaho-weka-scoring-plugin #
+_Weka scoring plugin for Kettle_
 
-DM Commons is a small library containing a metadata class and log adaptor used by WEKA-related PDI plugins.
+The Weka Scoring plugin allows pre-built Weka classifiers and
+clusterers to be applied inside of a Kettle transform to
+score data. See docs/WekaScoring.pdf for more information.
 
 To install the plugin step simply unzip the
 "WekaScoring-SNAPSHOT-deploy.zip" archive in the plugins/steps
@@ -49,6 +51,7 @@ $ mvn test
 
 If you want to remote debug a single java unit test (default port is 5005):
 ```
+$ cd core
 $ mvn test -Dtest=<<YourTest>> -Dmaven.surefire.debug
 ```
 
