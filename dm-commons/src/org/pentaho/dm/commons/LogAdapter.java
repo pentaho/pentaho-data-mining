@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2008 - 2016 Pentaho Corporation.  All rights reserved. 
- * This software was developed by Pentaho Corporation and is provided under the terms 
+ * Copyright (c) 2008 - 2017 Hitachi Vantara.  All rights reserved. 
+ * This software was developed by Hitachi Vantara and is provided under the terms 
  * of the GNU Lesser General Public License, Version 2.1. You may not use 
  * this file except in compliance with the license. If you need a copy of the license, 
  * please go to http://www.gnu.org/licenses/lgpl-2.1.txt. The Original Code is Pentaho 
@@ -13,7 +13,7 @@
 
 /*
  *    LogAdapter.java
- *    Copyright 2008 Pentaho Corporation.  All rights reserved. 
+ *    Copyright 2008 - 2017 Hitachi Vantara.  All rights reserved. 
  *
  */
  
