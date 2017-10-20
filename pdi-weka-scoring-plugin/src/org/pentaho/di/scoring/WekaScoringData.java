@@ -47,7 +47,6 @@ import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.SerializationHelper;
 import weka.core.Utils;
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
@@ -263,7 +262,7 @@ public class WekaScoringData extends BaseStepData implements StepDataInterface {
       if ( modelFile.toLowerCase().endsWith( ".gz" ) ) { //$NON-NLS-1$
         stream = new GZIPInputStream( buff );
       }
-      ObjectInputStream oi = SerializationHelper.getObjectInputStream( stream );
+      ObjectInputStream oi = new ObjectInputStream( stream );
 
       model = oi.readObject();
 
