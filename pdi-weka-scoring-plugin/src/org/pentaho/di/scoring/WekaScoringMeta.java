@@ -56,7 +56,6 @@ import org.pentaho.di.trans.step.StepMetaInterface;
 import org.w3c.dom.Node;
 
 import weka.core.Instances;
-import weka.core.SerializationHelper;
 import weka.core.SerializedObject;
 
 /**
@@ -607,7 +606,7 @@ public class WekaScoringMeta extends BaseStepMeta implements StepMetaInterface {
 
     // now de-serialize
     ByteArrayInputStream bis = new ByteArrayInputStream( model );
-    ObjectInputStream ois = SerializationHelper.getObjectInputStream( bis );
+    ObjectInputStream ois = new ObjectInputStream( bis );
 
     if ( m_fileNameFromField ) {
       m_defaultModel = (WekaScoringModel) ois.readObject();
