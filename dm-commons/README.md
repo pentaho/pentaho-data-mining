@@ -4,7 +4,7 @@
 
 https://github.com/pentaho/pentaho-data-mining
 
-# Pentaho dm-commons library
+# Hitachi Vantara dm-commons library
 ==========================
 
 DM Commons is a small library containing a metadata class and log adaptor used by WEKA-related PDI plugins.
