@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.pentaho</groupId>
+    <artifactId>pentaho-ce-jar-parent-pom</artifactId>
+    <version>8.1-SNAPSHOT</version>
+  </parent>
+
+  <groupId>pentaho.weka</groupId>
+  <artifactId>pentaho-data-mining</artifactId>
+  <version>8.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Pentaho Community Edition Project: pentaho-data-mining</name>
+  <description>a Pentaho sponsored open source project</description>
+  <url>http://www.pentaho.org</url>
+
+  <scm>
+    <developerConnection>scm:git:git@github.com:pentaho/${project.artifactId}.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <licenses>
+    <license>
+      <name>GNU Lesser General Public License, Version 2.1</name>
+      <url>https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt</url>
+      <distribution>repo</distribution>
+      <comments></comments>
+    </license>
+    <license>
+      <name>GNU General Public License, Version 2</name>
+      <url>https://www.gnu.org/licenses/gpl-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments></comments>
+    </license>
+  </licenses>
+
+  <properties>
+    <timestamp>${maven.build.timestamp}</timestamp>
+    <maven.build.timestamp.format>yyyy/MM/dd hh:mm</maven.build.timestamp.format>
+
+    <commons-vfs2.version>2.1-20150824</commons-vfs2.version>
+    <kettle.version>8.1-SNAPSHOT</kettle.version>
+    <pdm-ce.version>3.8.1.1</pdm-ce.version>
+    <org.eclipse.swt.gtk.linux.x86_64.version>4.6</org.eclipse.swt.gtk.linux.x86_64.version>
+    <xml-apis.version>2.0.2</xml-apis.version>
+  </properties>
+
+  <modules>
+    <module>dm-commons</module>
+    <module>pdi-weka-arff-output-plugin</module>
+    <module>pdi-weka-scoring-plugin</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- 'COMPILE' SCOPED DEPS -->
+      <dependency>
+        <groupId>pentaho.weka</groupId>
+        <artifactId>pdm-ce</artifactId>
+        <version>${pdm-ce.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>xml-apis</groupId>
+        <artifactId>xml-apis</artifactId>
+        <version>${xml-apis.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>pentaho.weka</groupId>
+        <artifactId>dm-commons</artifactId>
+        <version>${project.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <!-- 'RUNTIME' SCOPED DEPS -->
+
+      <!-- 'PROVIDED' SCOPED DEPS -->
+
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-vfs2</artifactId>
+        <version>${commons-vfs2.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>pentaho-kettle</groupId>
+        <artifactId>kettle-core</artifactId>
+        <version>${kettle.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>pentaho-kettle</groupId>
+        <artifactId>kettle-engine</artifactId>
+        <version>${kettle.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>pentaho-kettle</groupId>
+        <artifactId>kettle-ui-swt</artifactId>
+        <version>${kettle.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>pentaho</groupId>
+        <artifactId>pentaho-vfs-browser</artifactId>
+        <version>${project.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.swt</groupId>
+        <artifactId>org.eclipse.swt.gtk.linux.x86_64</artifactId>
+        <version>${org.eclipse.swt.gtk.linux.x86_64.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <!-- 'TEST' SCOPED DEPS -->
+
+    </dependencies>
+  </dependencyManagement>
+</project>
