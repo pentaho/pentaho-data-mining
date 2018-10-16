@@ -94,6 +94,13 @@
           </exclusion>
         </exclusions>
       </dependency>
+	  
+      <dependency>
+        <groupId>pentaho-kettle</groupId>
+        <artifactId>kettle-core</artifactId>
+        <version>${pdi.version}</version>
+      </dependency>
+	  
       <!-- 'RUNTIME' SCOPED DEPS -->
 
       <!-- 'PROVIDED' SCOPED DEPS -->
@@ -102,19 +109,6 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-vfs2</artifactId>
         <version>${commons-vfs2.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>pentaho-kettle</groupId>
-        <artifactId>kettle-core</artifactId>
-        <version>${pdi.version}</version>
         <scope>provided</scope>
         <exclusions>
           <exclusion>
