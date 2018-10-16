@@ -99,6 +99,7 @@
         <groupId>pentaho-kettle</groupId>
         <artifactId>kettle-core</artifactId>
         <version>${pdi.version}</version>
+        <scope>provided</scope>
       </dependency>
 	  
       <!-- 'RUNTIME' SCOPED DEPS -->
