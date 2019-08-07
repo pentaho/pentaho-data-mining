@@ -5,7 +5,7 @@ _Pentaho Data Mining (Weka) Plugins_
 * Java JDK 1.8
 * This [settings.xml](https://github.com/pentaho/maven-parent-poms/blob/master/maven-support-files/settings.xml) in your \<user-home>\/.m2 directory
 
-
+----
 __Build for nightly/release__
 
 All required profiles are activated by the presence of a property named "release".
