@@ -42,6 +42,7 @@
     <timestamp>${maven.build.timestamp}</timestamp>
     <maven.build.timestamp.format>yyyy/MM/dd hh:mm</maven.build.timestamp.format>
 
+    <commons-vfs2.version>2.2</commons-vfs2.version>
     <pdi.version>9.0.0.0-SNAPSHOT</pdi.version>
     <pdm-ce.version>3.8.1.1</pdm-ce.version>
     <org.eclipse.swt.gtk.linux.x86_64.version>4.6</org.eclipse.swt.gtk.linux.x86_64.version>
