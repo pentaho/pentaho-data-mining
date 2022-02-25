@@ -54,7 +54,7 @@ import org.w3c.dom.Node;
  */
 @Step( id = "ArffOutput", image = "ARFF.svg", name = "Arff output", description = "Writes data in ARFF format to a "
   + "file",
-  documentationUrl = "http://wiki.pentaho.com/display/EAI/ARFF+Output", categoryDescription = "Data Mining" )
+  documentationUrl = "https://pentaho-community.atlassian.net/wiki/display/EAI/ARFF+Output", categoryDescription = "Data Mining" )
 public class ArffOutputMeta extends BaseStepMeta implements StepMetaInterface {
 
   protected static Class<?> PKG = ArffOutputMeta.class;
