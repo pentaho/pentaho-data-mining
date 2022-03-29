@@ -7,12 +7,12 @@
   <parent>
     <groupId>pentaho</groupId>
     <artifactId>pdi-arffoutput-plugin-assemblies</artifactId>
-    <version>9.4.0.0-SNAPSHOT</version>
+    <version>9.4.0.0-2</version>
   </parent>
 
   <groupId>pentaho</groupId>
   <artifactId>pdi-arffoutput-plugin</artifactId>
-  <version>9.4.0.0-SNAPSHOT</version>
+  <version>9.4.0.0-2</version>
   <packaging>pom</packaging>
 
   <name>Pentaho Community Edition Project: pdi-arffoutput-plugin</name>
