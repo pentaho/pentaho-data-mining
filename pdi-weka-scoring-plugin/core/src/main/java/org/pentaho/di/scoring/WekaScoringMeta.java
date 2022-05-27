@@ -13,7 +13,7 @@
 * See the GNU General Public License for more details.
 *
 *
-* Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+* Copyright 2006 - 2022 Hitachi Vantara.  All rights reserved.
 */
 
 package org.pentaho.di.scoring;
@@ -63,7 +63,7 @@ import weka.core.SerializedObject;
  *
  * @author Mark Hall (mhall{[at]}pentaho{[dot]}org)
  */
-@Step( id = "WekaScoring", image = "WEKAS.svg", name = "Weka Scoring", description = "Appends predictions from a pre-built Weka model", categoryDescription = "Data Mining", documentationUrl = "http://wiki.pentaho.com/display/DATAMINING/Using+the+Weka+Scoring+Plugin" )
+@Step( id = "WekaScoring", image = "WEKAS.svg", name = "Weka Scoring", description = "Appends predictions from a pre-built Weka model", categoryDescription = "Data Mining", documentationUrl = "https://pentaho-community.atlassian.net/wiki/display/DATAMINING/Using+the+Weka+Scoring+Plugin" )
 public class WekaScoringMeta extends BaseStepMeta implements StepMetaInterface {
 
   protected static Class<?> PKG = WekaScoringMeta.class;
