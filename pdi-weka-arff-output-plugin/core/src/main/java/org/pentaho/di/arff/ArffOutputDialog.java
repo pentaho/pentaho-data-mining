@@ -13,7 +13,7 @@
 * See the GNU General Public License for more details.
 *
 *
-* Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+* Copyright 2006 - 2022 Hitachi Vantara.  All rights reserved.
 */
 
 package org.pentaho.di.arff;
@@ -42,7 +42,6 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
@@ -61,6 +60,10 @@ import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.ui.core.dialog.ErrorDialog;
+import org.pentaho.di.ui.core.events.dialog.FilterType;
+import org.pentaho.di.ui.core.events.dialog.SelectionAdapterFileDialogTextVar;
+import org.pentaho.di.ui.core.events.dialog.SelectionAdapterOptions;
+import org.pentaho.di.ui.core.events.dialog.SelectionOperation;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
@@ -546,6 +549,10 @@ public class ArffOutputDialog extends BaseStepDialog implements
 
     // Add listeners
 
+    m_wbFilename.addSelectionListener( new SelectionAdapterFileDialogTextVar(log, m_wFilename, transMeta,
+      new SelectionAdapterOptions( SelectionOperation.SAVE,
+        new FilterType[] { FilterType.ALL }, FilterType.ALL  ) ) );
+
     // Whenever something changes, set the tooltip to the expanded version:
     m_wFilename.addModifyListener(new ModifyListener() {
       public void modifyText(ModifyEvent e) {
@@ -558,38 +565,6 @@ public class ArffOutputDialog extends BaseStepDialog implements
       @Override
       public void widgetDefaultSelected(SelectionEvent e) {
         m_currentMeta.setFileName(m_wFilename.getText());
-      }
-    });
-
-    m_wbFilename.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        FileDialog dialog = new FileDialog(shell, SWT.SAVE);
-        dialog.setFilterExtensions(new String[] { "*.arff", "*" });
-        if (m_wFilename.getText() != null) {
-          String fn = m_wFilename.getText();
-          int l = fn.lastIndexOf(System.getProperty("file.separator"));
-          if (l >= 0) {
-            fn = fn.substring(l + 1, fn.length());
-          }
-          dialog.setFileName(transMeta.environmentSubstitute(fn));
-
-        }
-        dialog.setFilterNames(new String[] { BaseMessages.getString(
-            ArffOutputMeta.PKG, "System.FileType.AllFiles") });
-
-        if (dialog.open() != null) {
-
-          String fileName = dialog.getFileName();
-          if (!fileName.endsWith(".arff")) {
-            fileName += ".arff";
-          }
-
-          m_wFilename.setText(dialog.getFilterPath()
-              + System.getProperty("file.separator") + fileName);
-
-          m_currentMeta.setFileName(fileName);
-        }
       }
     });
 
