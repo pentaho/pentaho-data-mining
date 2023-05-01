@@ -11,7 +11,7 @@
 
   <groupId>pentaho.weka</groupId>
   <artifactId>pentaho-data-mining</artifactId>
-  <version>9.6.0.0-SNAPSHOT-15</version>
+  <version>9.6.0.0-SNAPSHOT-16</version>
   <packaging>pom</packaging>
 
   <name>Pentaho Community Edition Project: pentaho-data-mining</name>
